@@ -1,10 +1,11 @@
 Format: http://dep.debian.net/deps/dep5
-Upstream-Name: com.github.dr-styki.screenrec
-Source: https://github.com/dr-Styki/ScreenRec/
+Upstream-Name: com.github.jedihe.workday
+Source: https://github.com/jedihe/workday/
 
 Files: *
 Copyright: 2018 Mohammed ALMadhoun <mohelm97@gmail.com>
 Copyright: 2020 Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
+Copyright: 2021 John Herreño <jedihe@gmail.com>
 License: GPL-3.0+
 
 License: GPL-3.0+

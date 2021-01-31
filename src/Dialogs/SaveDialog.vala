@@ -23,7 +23,7 @@
  *              Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
  */
 
-namespace ScreenRec {
+namespace Workday {
 
     public class SaveDialog : Gtk.Dialog {
 
@@ -37,7 +37,7 @@ namespace ScreenRec {
         private Gtk.Button save_btn;
         private VideoPlayer preview;
         private string folder_dir = Environment.get_user_special_dir (UserDirectory.VIDEOS)
-        +  "%c".printf(GLib.Path.DIR_SEPARATOR) + ScreenRecApp.SAVE_FOLDER;
+        +  "%c".printf(GLib.Path.DIR_SEPARATOR) + WorkdayApp.SAVE_FOLDER;
 
         public SaveDialog (Gtk.Window parent, string filepath, int expected_width, int expected_height, string extension) {
             Object (
@@ -58,7 +58,7 @@ namespace ScreenRec {
         }
 
         construct {
-            GLib.Settings settings = ScreenRecApp.settings;
+            GLib.Settings settings = WorkdayApp.settings;
             Gdk.Rectangle selection_rect;
             Gdk.get_default_root_window ().get_frame_extents (out selection_rect);
             int max_width_height = selection_rect.height*46/100;
@@ -94,7 +94,7 @@ namespace ScreenRec {
             if (folder_from_settings != folder_dir && folder_from_settings != "") {
                 folder_dir = folder_from_settings;
             }
-            ScreenRecApp.create_dir_if_missing (folder_dir);
+            WorkdayApp.create_dir_if_missing (folder_dir);
 
             var location = new Gtk.FileChooserButton (_("Select Screen Records Folder…"), Gtk.FileChooserAction.SELECT_FOLDER);
             location.set_filename (folder_dir);

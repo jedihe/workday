@@ -21,7 +21,7 @@
  *              Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
  */
 
-namespace ScreenRec {
+namespace Workday {
 
     public class ScreenrecorderWindow : Gtk.ApplicationWindow  {
 
@@ -83,7 +83,7 @@ namespace ScreenRec {
 
             set_keep_above (true);
             // Load Settings
-            GLib.Settings settings = ScreenRecApp.settings;
+            GLib.Settings settings = WorkdayApp.settings;
             
             // Init recorder and countdown objects for boolean test 
             send_notification = new SendNotification(this);
@@ -417,7 +417,7 @@ namespace ScreenRec {
 
             // Temp file
             var temp_dir = Environment.get_tmp_dir ();
-            tmpfilepath = Path.build_filename (temp_dir, "ScreenRec-%08x%s".printf (Random.next_int (), settings_views.extension));
+            tmpfilepath = Path.build_filename (temp_dir, "Workday-%08x%s".printf (Random.next_int (), settings_views.extension));
             debug ("Temp file created at: %s", tmpfilepath);
 
             // Init Recorder

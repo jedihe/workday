@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=ScreenRec
-Comment=Record videos of the screen
-Exec=com.github.dr-styki.screenrec
-Icon=com.github.dr-styki.screenrec
+Name=Workday
+Comment=Record a timelapse of your workday.
+Exec=com.github.jedihe.workday
+Icon=com.github.jedihe.workday
 Terminal=false
 Type=Application
 Categories=GTK;GNOME;Utility;AudioVideo;Video;
@@ -12,12 +12,12 @@ X-GNOME-UsesNotifications=true
 
 [Desktop Action ScreenRecord]
 Name=Record the Whole Screen
-Exec=com.github.dr-styki.screenrec --screen
+Exec=com.github.jedihe.workday --screen
 
 [Desktop Action WindowRecord]
 Name=Record the Current Window
-Exec=com.github.dr-styki.screenrec --window
+Exec=com.github.jedihe.workday --window
 
 [Desktop Action AreaRecord]
 Name=Record a Selected Area
-Exec=com.github.dr-styki.screenrec --area
+Exec=com.github.jedihe.workday --area

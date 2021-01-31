@@ -19,7 +19,7 @@
  * Authored by: Mohammed ALMadhoun <mohelm97@gmail.com>
  */
 
-namespace ScreenRec {
+namespace Workday {
     public class VideoPlayer : Gtk.Box  {
         private string fileuri;
         private ClutterGst.Playback playback;

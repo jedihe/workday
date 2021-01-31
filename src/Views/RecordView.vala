@@ -17,7 +17,7 @@
  *
  */
 
-namespace ScreenRec {
+namespace Workday {
 
     public class RecordView : Gtk.Box {
 

@@ -22,9 +22,9 @@
  * Authored by: Mohammed ALMadhoun <mohelm97@gmail.com>
  */
 
-namespace ScreenRec {
+namespace Workday {
 
-    public class ScreenRecApp : Gtk.Application {
+    public class WorkdayApp : Gtk.Application {
         
         public static GLib.Settings settings;
         private ScreenrecorderWindow window = null;
@@ -37,9 +37,9 @@ namespace ScreenRec {
 
         public const string SAVE_FOLDER = _("Screen Records");
 
-        public ScreenRecApp () {
+        public WorkdayApp () {
             Object (
-                application_id: "com.github.dr-styki.screenrec",
+                application_id: "com.github.jedihe.workday",
                 flags: ApplicationFlags.FLAGS_NONE
             );
         }
@@ -55,9 +55,9 @@ namespace ScreenRec {
 
             add_main_option_entries (options);
 
-            settings = new GLib.Settings ("com.github.dr-styki.screenrec");
+            settings = new GLib.Settings ("com.github.jedihe.workday");
             weak Gtk.IconTheme default_theme = Gtk.IconTheme.get_default ();
-            default_theme.add_resource_path ("/com/github/dr-Styki/ScreenRec");
+            default_theme.add_resource_path ("/com/github/jedihe/workday");
 
             var quit_action = new SimpleAction ("quit", null);
             quit_action.activate.connect (() => {
@@ -111,7 +111,7 @@ namespace ScreenRec {
             } else {
 
                 var provider = new Gtk.CssProvider ();
-                provider.load_from_resource ("/com/github/dr-Styki/ScreenRec/stylesheet.css");
+                provider.load_from_resource ("/com/github/jedihe/workday/stylesheet.css");
                 Gtk.StyleContext.add_provider_for_screen (
                 Gdk.Screen.get_default (),
                 provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
@@ -139,7 +139,7 @@ namespace ScreenRec {
                 error ("Could not initalize clutter! " + err.to_string ());
             }
 
-            var app = new ScreenRecApp ();
+            var app = new WorkdayApp ();
             return app.run (args);
         }
 

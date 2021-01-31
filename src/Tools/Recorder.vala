@@ -23,7 +23,7 @@
  * Authored by: Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
  */
 
-namespace ScreenRec {
+namespace Workday {
 
     public class Recorder : GLib.Object {
 

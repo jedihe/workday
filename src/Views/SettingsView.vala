@@ -19,7 +19,7 @@
  * Authored by: Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
  */
 
-namespace ScreenRec {
+namespace Workday {
 
     public class SettingsView : Gtk.Box {
 
@@ -74,7 +74,7 @@ namespace ScreenRec {
         construct {
 
             // Load Settings
-            GLib.Settings settings = ScreenRecApp.settings;
+            GLib.Settings settings = WorkdayApp.settings;
 
             // Grab mouse pointer ? 
             var pointer_label = new Gtk.Label (_("Grab mouse pointer:"));

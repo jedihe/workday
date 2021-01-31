@@ -1,11 +1,11 @@
-# Brazilian Portuguese translations for com.github.dr-styki.screenrec package.
-# Copyright (C) 2020 THE com.github.dr-styki.screenrec'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the com.github.dr-styki.screenrec package.
+# Brazilian Portuguese translations for com.github.jedihe.workday package.
+# Copyright (C) 2020 THE com.github.jedihe.workday'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the com.github.jedihe.workday package.
 # Henrique Andrade <henrique.coelho@gmail.com>, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: com.github.dr-styki.screenrec\n"
+"Project-Id-Version: com.github.jedihe.workday\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-10 10:20+0200\n"
 "PO-Revision-Date: 2020-06-09 19:52+0200\n"
@@ -248,11 +248,11 @@ msgstr "Formato:"
 #~ "Primeiro lançamento após o fork do aplicativo screenrecorder de Mohammed "
 #~ "ALMadhoun"
 
-#~ msgid "Stevy THOMAS (dr_Styki)"
-#~ msgstr "Stevy THOMAS (dr_Styki)"
+#~ msgid "John Herreño"
+#~ msgstr "John Herreño"
 
-#~ msgid "com.github.dr-styki.screenrec"
-#~ msgstr "com.github.dr-styki.screenrec"
+#~ msgid "com.github.jedihe.workday"
+#~ msgstr "com.github.jedihe.workday"
 
 #~ msgid "Screenshot;Screen;Record;Recording;"
 #~ msgstr "Captura de tela;Tela;Registro;Gravação;"

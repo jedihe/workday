@@ -1,7 +1,7 @@
-Source: com.github.dr-styki.screenrec
+Source: com.github.jedihe.workday
 Section: x11
 Priority: extra
-Maintainer: Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
+Maintainer: John Herreño <jedihe@gmail.com>
 Build-Depends: meson,
                debhelper,
                libgranite-dev,
@@ -13,8 +13,8 @@ Build-Depends: meson,
                valac
 Standards-Version: 3.9.3
 
-Package: com.github.dr-styki.screenrec
+Package: com.github.jedihe.workday
 Architecture: any
 Depends: ffmpeg, gstreamer1.0-plugins-ugly, gstreamer1.0-libav, gstreamer1.0-plugins-good, ${misc:Depends}, ${shlibs:Depends}
-Description: Record videos of the screen
- A simple screen recording tool which was make to work like the elementary OS Screenshot tool.
+Description: Record a timelapse of your workday.
+ @TODO

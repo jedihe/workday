@@ -19,12 +19,12 @@
  * Authored by: Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
  */
 
-namespace ScreenRec { 
+namespace Workday { 
 
     public class SendNotification : GLib.Object {
 
         private Gtk.ApplicationWindow app;
-        private string app_id = "com.github.dr-styki.ScreenRec";
+        private string app_id = "com.github.jedihe.workday";
 
         private Notification start_notification = new Notification (_("Recording started"));
         private Notification stop_notification = new Notification (_("Recording stopped"));
