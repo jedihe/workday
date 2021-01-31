@@ -443,6 +443,7 @@ namespace Workday {
             } else {
 
                 recorder.start ();
+                record_view.set_recorder(recorder);
                 record_view.init_count ();
                 stack.visible_child_name = "record";
                 send_notification.start();

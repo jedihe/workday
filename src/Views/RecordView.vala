@@ -24,10 +24,8 @@ namespace Workday {
         private Gtk.Label time_label;
         private uint count;
         private bool pause = false;
-        private int past_minutes_10;
-        private int past_minutes_1;
-        private int past_seconds_10;
-        private int past_seconds_1;
+        private int seconds;
+        private Recorder recorder;
 
 
         public RecordView () {
@@ -52,6 +50,10 @@ namespace Workday {
 
             pack_start (label_grid, false, false);
         }
+        
+        public void set_recorder(Recorder recorder) {
+            this.recorder = recorder;
+        }
 
         public async void trigger_stop_recording () {
 
@@ -59,14 +61,9 @@ namespace Workday {
         }
 
         public void init_count () {
-
-            past_minutes_10 = 0;
-            past_minutes_1 = 0;
-            past_seconds_10 = 0;
-            past_seconds_1 = 0;
-
+            seconds = 0;
             pause = false;
-            show_timer_label (time_label, past_minutes_10, past_minutes_1, past_seconds_10, past_seconds_1);
+            show_timer_label (time_label, 0, 0, 0, 0);
             start_count ();
         }
 
@@ -80,30 +77,20 @@ namespace Workday {
         private void start_count () {
 
             count = Timeout.add (1000, () => {
+                int display_minutes;
+                int display_seconds;
 
                 // If the user pressed "pause", do not count this second.
                 if (pause) {
                     return false;
                 }
 
-                if (past_seconds_10 < 5 && past_seconds_1 == 9) {
-                    // The count turns from wx:y9 to wx:(y+1)0
-                    past_seconds_10++;
-                    past_seconds_1 = 0;
-                } else if (past_minutes_1 < 9 && past_seconds_10 == 5 && past_seconds_1 == 9) {
-                    // The count turns from wx:59 to w(x+1):00
-                    past_minutes_1++;
-                    past_seconds_1 = past_seconds_10 = 0;
-                } else if (past_minutes_1 == 9 && past_seconds_10 == 5 && past_seconds_1 == 9) {
-                    // The count turns from w9:59 to (w+1)0:00
-                    past_minutes_10++;
-                    past_minutes_1 = past_seconds_10 = past_seconds_1 = 0;
-                } else {
-                    // The count turns from wx:yx to wx:y(z+1)
-                    past_seconds_1++;
-                }
+                seconds = recorder.query_position();
 
-                show_timer_label (time_label, past_minutes_10, past_minutes_1, past_seconds_10, past_seconds_1);
+                display_minutes = seconds / 60;
+                display_seconds = seconds % 60;
+
+                show_timer_label (time_label, display_minutes / 10, display_minutes % 10, display_seconds / 10, display_seconds % 10);
                 return true;
             });
         }

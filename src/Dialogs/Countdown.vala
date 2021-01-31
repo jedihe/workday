@@ -86,6 +86,7 @@ namespace Workday {
 
                             recorder.start ();
                             stack.visible_child_name = "record";
+                            record_view.set_recorder(recorder);
                             record_view.init_count ();
                             send_notification.start();
                             this.is_active_cd = false;

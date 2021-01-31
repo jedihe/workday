@@ -27,4 +27,4 @@ To install, use `ninja install`, then execute with `com.github.jedihe.workday`
     com.github.jedihe.workday
 
 ## Credits
-Originaly forked from [ScreenRec](https://github.com/jedihe/workday). Icon by [Nararyans R.I. (Fatih20)](https://github.com/Fatih20). Video of Fatih20 making the icon [here](https://lbry.tv/@Fatih109:4/Final-Design:6?r=Cg1pp5MCWV1a5Nj5jDumPs9b13dNZqWG)
+Originally forked from [ScreenRec](https://github.com/jedihe/workday). Icon by [Nararyans R.I. (Fatih20)](https://github.com/Fatih20). Video of Fatih20 making the icon [here](https://lbry.tv/@Fatih109:4/Final-Design:6?r=Cg1pp5MCWV1a5Nj5jDumPs9b13dNZqWG)

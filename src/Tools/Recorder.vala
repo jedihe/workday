@@ -38,6 +38,7 @@ namespace Workday {
         private int starty;
         private int endx;
         private int endy;
+        private int fallback_timer_count;
 
         public bool is_recording_in_progress { get; private set; default = false; }
         public bool is_recording { get; private set; default = false; }
@@ -196,7 +197,7 @@ namespace Workday {
             videosrc.set_property ("use-damage", false);
             videosrc.set_property ("show-pointer", is_cursor_captured);
 
-            Gst.Caps vid_caps = Gst.Caps.from_string("video/x-raw,framerate=" + framerate.to_string () + "/1");
+            Gst.Caps vid_caps = Gst.Caps.from_string("video/x-raw,framerate=1/2");
             vid_caps_filter = Gst.ElementFactory.make("capsfilter", "vid_filter");
             vid_caps_filter.set_property("caps", vid_caps);
 
@@ -601,12 +602,13 @@ namespace Workday {
             pipeline.set_state (Gst.State.PLAYING);
             this.is_recording = true;
             this.is_recording_in_progress = true;
+            this.start_fallback_timer();
         }
 
         public void pause () {
-
             pipeline.set_state (Gst.State.PAUSED);
             this.is_recording = false;
+            this.print_pos(pipeline);
         }
 
         public void resume () {
@@ -616,6 +618,8 @@ namespace Workday {
         }
 
         public void stop () {
+            stdout.printf("Before processing Recorder.stop()\n");
+            this.print_pos(pipeline);
 
             if (!this.is_recording) {
                 this.resume();
@@ -623,6 +627,39 @@ namespace Workday {
             pipeline.send_event (new Gst.Event.eos ());
             this.is_recording = false;
             this.is_recording_in_progress = false;
+
+            stdout.printf("After processing Recorder.stop()\n");
+            this.print_pos(pipeline);
+        }
+        
+        private void start_fallback_timer() {
+            Timeout.add (1000, () => {
+                fallback_timer_count++;
+                return this.pipeline_query_position() == -1;
+            });
+        }
+
+        private int64 pipeline_query_position() {
+            int64 position;
+            pipeline.query_position(Gst.Format.TIME, out position);
+
+            return position;
+        }
+
+        public int query_position() {
+            int64 pos = this.pipeline_query_position();
+            if (pos == -1) {
+                stdout.printf("Recorder.query_position(): using fallback_timer_count\n");
+                return fallback_timer_count;
+            }
+            else {
+                stdout.printf("Recorder.query_position(): using pipeline_query_position()\n");
+                return (int) (pos / 1000000000);
+            }
+        }
+
+        private void print_pos(Gst.Pipeline ppl) {
+            stdout.printf("Pipeline position; %s\n", pipeline_query_position().to_string());
         }
     }
 }

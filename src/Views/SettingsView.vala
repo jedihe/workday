@@ -189,12 +189,12 @@ namespace Workday {
             sub_grid.attach (pointer_switch    , 1, 1, 1, 1);
             sub_grid.attach (close_label       , 0, 2, 1, 1);
             sub_grid.attach (close_switch      , 1, 2, 1, 1);
-            sub_grid.attach (audio_label       , 0, 3, 1, 1);
-            sub_grid.attach (audio_grid        , 1, 3, 1, 1);
+            //sub_grid.attach (audio_label       , 0, 3, 1, 1);
+            //sub_grid.attach (audio_grid        , 1, 3, 1, 1);
             sub_grid.attach (delay_label       , 0, 4, 1, 1);
             sub_grid.attach (delay_spin        , 1, 4, 1, 1);
-            sub_grid.attach (framerate_label   , 0, 5, 1, 1);
-            sub_grid.attach (framerate_spin    , 1, 5, 1, 1);
+            //sub_grid.attach (framerate_label   , 0, 5, 1, 1);
+            //sub_grid.attach (framerate_spin    , 1, 5, 1, 1);
             sub_grid.attach (format_label       , 0, 6, 1, 1);
             sub_grid.attach (format_cmb    , 1, 6, 1, 1);
 
