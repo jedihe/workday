@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018 Mohammed ALMadhoun <mohelm97@gmail.com>
  *               2020 Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
+ *               2021 John Herreño <jedihe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -417,13 +418,20 @@ namespace Workday {
 
             // Temp file
             var temp_dir = Environment.get_tmp_dir ();
-            tmpfilepath = Path.build_filename (temp_dir, "Workday-%08x%s".printf (Random.next_int (), settings_views.extension));
+            GLib.Settings settings = WorkdayApp.settings;
+            DateTime now = new DateTime.now ();
+            var session_name = now.format ("%Y-%m-%d-%H-%M-%S");
+            var session_dir = Environment.get_user_special_dir (UserDirectory.VIDEOS)
+        +  "%c".printf(GLib.Path.DIR_SEPARATOR) + WorkdayApp.SAVE_FOLDER + "%c".printf(GLib.Path.DIR_SEPARATOR) + session_name;
+            WorkdayApp.create_dir_if_missing (session_dir);
+            tmpfilepath = Path.build_filename (session_dir, "Workday-%s%s".printf (session_name, settings_views.extension));
             debug ("Temp file created at: %s", tmpfilepath);
 
             // Init Recorder
             recorder = new Recorder();
             recorder.config(capture_mode,
-                            tmpfilepath, 
+                            tmpfilepath,
+                            session_name,
                             settings_views.framerate, 
                             settings_views.speakers_record, 
                             settings_views.mic_record,
