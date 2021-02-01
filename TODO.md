@@ -9,10 +9,15 @@ Get a minimally working version of Workday, working in elementary; ensure good s
     2. ~~Get them building locally, to ensure the code can be used by me~~.
 2. Write down features for MVP
     1. Fixed 0.5 fps
-    2. Session management:
+    2. Fragmented recording
+    3. Session management:
         1. Multiple sessions
         2. Quick switching between sessions
-        3. Fragmented recording
-        4. Timer, accumulating old + current fragment
-        5. Joining of final file (ffmpeg)
+        3. Timer, accumulating old + current fragment
+        4. Joining of final file (ffmpeg)
 3. MVP implementation plan:
+    1. ~~Hardcode 0.5 fpx~~
+    2. Store recordings in ~/Videos/Workday
+    3. Store recordings in a sub-dir
+    4. Store recordings as fragments
+    5. Consolidate total recording time from old + current fragment
