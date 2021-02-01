@@ -35,7 +35,7 @@ namespace Workday {
         private bool win = false;
         private bool area = false;
 
-        public const string SAVE_FOLDER = _("Screen Records");
+        public const string SAVE_FOLDER = _("Workday");
 
         public WorkdayApp () {
             Object (

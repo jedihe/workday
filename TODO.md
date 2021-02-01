@@ -17,7 +17,7 @@ Get a minimally working version of Workday, working in elementary; ensure good s
         4. Joining of final file (ffmpeg)
 3. MVP implementation plan:
     1. ~~Hardcode 0.5 fpx~~
-    2. Store recordings in ~/Videos/Workday
+    2. ~~Store recordings in ~/Videos/Workday~~
     3. Store recordings in a sub-dir
     4. Store recordings as fragments
     5. Consolidate total recording time from old + current fragment
