@@ -421,8 +421,7 @@ namespace Workday {
             GLib.Settings settings = WorkdayApp.settings;
             DateTime now = new DateTime.now ();
             var session_name = now.format ("%Y-%m-%d-%H-%M-%S");
-            var session_dir = Environment.get_user_special_dir (UserDirectory.VIDEOS)
-        +  "%c".printf(GLib.Path.DIR_SEPARATOR) + WorkdayApp.SAVE_FOLDER + "%c".printf(GLib.Path.DIR_SEPARATOR) + session_name;
+            var session_dir = this.get_session_dir (session_name);
             WorkdayApp.create_dir_if_missing (session_dir);
             tmpfilepath = Path.build_filename (session_dir, "Workday-%s%s".printf (session_name, settings_views.extension));
             debug ("Temp file created at: %s", tmpfilepath);
@@ -464,6 +463,7 @@ namespace Workday {
         }
 
         void stop_recording () {
+            Cancellable cancellable = new Cancellable ();
 
             // Update Buttons
             set_button_label (ButtonsLabelMode.SETTINGS);
@@ -475,29 +475,45 @@ namespace Workday {
             stack.visible_child_name = "settings";
             present ();
 
+            File tmp_file = File.new_for_path (tmpfilepath);
+            var session_dir = this.get_session_dir (recorder.session_name);
+            string file_name = Path.build_filename (session_dir, "Full-%s%s".printf (recorder.session_name, settings_views.extension));
+            File save_file = File.new_for_path (file_name);
+
+            try {
+                tmp_file.move (save_file, 0, cancellable, null);
+            } catch (Error e) {
+                print ("Error: %s\n", e.message);
+            }
+            settings_views.set_sensitive (true);
+            if (settings_views.close_switch.get_state()) {
+                // @TODO: poll the recorder pipeline until it finishes processing correctly. Close after that.
+                //close();
+            }
+
             // Open Sav Dialog
-            var save_dialog = new SaveDialog (this, tmpfilepath, recorder.width, recorder.height, settings_views.extension);
-            save_dialog_present = true;
+            //var save_dialog = new SaveDialog (this, tmpfilepath, recorder.width, recorder.height, settings_views.extension);
+            //save_dialog_present = true;
             //save_dialog.set_keep_above (true);
-            debug("Sav Dialog Open");
-            save_dialog.show_all ();
-            debug("Sav Dialog Close");
+            //debug("Sav Dialog Open");
+            //save_dialog.show_all ();
+            //debug("Sav Dialog Close");
             //save_dialog.set_keep_above (false);
 
-            save_dialog.close.connect (() => {
+            // save_dialog.close.connect (() => {
 
-                debug("Sav Dialog Close Connect");
+            //     debug("Sav Dialog Close Connect");
 
-                save_dialog_present = false;
-                settings_views.set_sensitive (true);
-                capture_type_grid.set_sensitive (true);
+            //     save_dialog_present = false;
+            //     settings_views.set_sensitive (true);
+            //     capture_type_grid.set_sensitive (true);
 
-                //if close after saving
-                if(settings_views.close_switch.get_state()) { 
+            //     //if close after saving
+            //     if(settings_views.close_switch.get_state()) { 
 
-                    close();
-                }
-            });
+            //         close();
+            //     }
+            // });
         }
 
         public void set_capture_type(int capture_type) {
@@ -531,6 +547,13 @@ namespace Workday {
 
                 return true;
             }
+        }
+
+        public string get_session_dir (string session_name) {
+            return Path.build_filename (
+                Environment.get_user_special_dir (UserDirectory.VIDEOS),
+                WorkdayApp.SAVE_FOLDER,
+                session_name);
         }
     }
 }

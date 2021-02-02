@@ -30,7 +30,7 @@ namespace Workday {
         ScreenrecorderWindow.CaptureType capture_mode;
         public Gdk.Window window;
         private string tmp_file;
-        private string session_name;
+        public string session_name {get; private set; }
         private int framerate;
         private bool are_speakers_recorded;
         private bool is_mic_recorded;
