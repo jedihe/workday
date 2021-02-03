@@ -485,11 +485,19 @@ namespace Workday {
             } catch (Error e) {
                 print ("Error: %s\n", e.message);
             }
-            settings_views.set_sensitive (true);
-            if (settings_views.close_switch.get_state()) {
-                // @TODO: poll the recorder pipeline until it finishes processing correctly. Close after that.
-                //close();
-            }
+
+            settings_views.set_sensitive (false);
+            Timeout.add (500, () => {
+                if (!recorder.is_recording) {
+                    if (settings_views.close_switch.get_state()) {
+                        close();
+                    }
+                    settings_views.set_sensitive (true);
+                    capture_type_grid.set_sensitive (true);
+                    return false;
+                }
+                return true;
+            });
 
             // Open Sav Dialog
             //var save_dialog = new SaveDialog (this, tmpfilepath, recorder.width, recorder.height, settings_views.extension);
