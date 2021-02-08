@@ -66,7 +66,7 @@ namespace Workday {
   
         // Others
         public Gdk.Window win;
-        private Recorder recorder;
+        private SessionRecorder session_recorder;
         public Countdown countdown;
         private string tmpfilepath;
         private bool save_dialog_present = false;
@@ -88,7 +88,7 @@ namespace Workday {
             
             // Init recorder and countdown objects for boolean test 
             send_notification = new SendNotification(this);
-            recorder = new Recorder();
+            session_recorder = new SessionRecorder();
             countdown = new Countdown (this, this.send_notification);
 
             // Select Screen/Area
@@ -188,7 +188,7 @@ namespace Workday {
             // Connect Buttons
             right_button.clicked.connect (() => { 
 
-                if (!recorder.is_recording && !countdown.is_active_cd && !recorder.is_recording_in_progress) {
+                if (!session_recorder.is_recording && !countdown.is_active_cd && !session_recorder.is_session_in_progress) {
 
                     switch (capture_mode) {
                         case CaptureType.SCREEN:
@@ -202,19 +202,19 @@ namespace Workday {
                             break;
                     }
 
-                } else if (recorder.is_recording && !countdown.is_active_cd && recorder.is_recording_in_progress) {
+                } else if (session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
                     stop_recording ();
                     send_notification.stop();
                     
 
-                } else if (!recorder.is_recording && !countdown.is_active_cd && recorder.is_recording_in_progress) {
+                } else if (!session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
-                    recorder.resume ();
+                    //recorder.resume ();
                     stop_recording ();
                     send_notification.stop();
 
-                } else if (!recorder.is_recording && countdown.is_active_cd && !recorder.is_recording_in_progress) {
+                } else if (!session_recorder.is_recording && countdown.is_active_cd && !session_recorder.is_session_in_progress) {
 
                     countdown.cancel ();
                     set_button_label(ButtonsLabelMode.SETTINGS);
@@ -227,25 +227,25 @@ namespace Workday {
 
             left_button.clicked.connect (() => {
 
-                if (recorder.is_recording && !countdown.is_active_cd && recorder.is_recording_in_progress) {
+                if (session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
-                    recorder.pause();
+                    session_recorder.pause_session();
                     record_view.pause_count ();
                     set_button_label (ButtonsLabelMode.RECORDING_PAUSED);
                     send_notification.pause();
 
-                } else if (!recorder.is_recording && !countdown.is_active_cd && recorder.is_recording_in_progress) {
+                } else if (!session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
-                    recorder.resume();
+                    session_recorder.resume_session ();
                     record_view.resume_count ();
                     set_button_label (ButtonsLabelMode.RECORDING);
                     send_notification.resume();
 
-                } else if (!recorder.is_recording && countdown.is_active_cd && !recorder.is_recording_in_progress) {
+                } else if (!session_recorder.is_recording && countdown.is_active_cd && !session_recorder.is_session_in_progress) {
 
                     iconify ();
 
-                } else if (!recorder.is_recording && !countdown.is_active_cd && !recorder.is_recording_in_progress) {
+                } else if (!session_recorder.is_recording && !countdown.is_active_cd && !session_recorder.is_session_in_progress) {
 
                     close ();
                 }
@@ -267,11 +267,11 @@ namespace Workday {
             KeybindingManager manager = new KeybindingManager();
             manager.bind("<Alt>P", () => {
 
-                if (recorder.is_recording && !countdown.is_active_cd && recorder.is_recording_in_progress) {
+                if (session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
                     left_button.clicked ();
 
-                } else if (!recorder.is_recording && !countdown.is_active_cd && recorder.is_recording_in_progress) {
+                } else if (!session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
                     left_button.clicked ();
 
@@ -280,7 +280,7 @@ namespace Workday {
 
             manager.bind("<Alt>S", () => {
 
-                if (countdown.is_active_cd || recorder.is_recording_in_progress) {
+                if (countdown.is_active_cd || session_recorder.is_session_in_progress) {
 
                     right_button.clicked ();
                 }
@@ -415,42 +415,34 @@ namespace Workday {
         }
 
         void start_recording (Gdk.Window? win) {
-
-            // Temp file
-            var temp_dir = Environment.get_tmp_dir ();
-            GLib.Settings settings = WorkdayApp.settings;
             DateTime now = new DateTime.now ();
             var session_name = now.format ("%Y-%m-%d-%H-%M-%S");
-            var session_dir = this.get_session_dir (session_name);
-            WorkdayApp.create_dir_if_missing (session_dir);
-            tmpfilepath = Path.build_filename (session_dir, "Workday-%s%s".printf (session_name, settings_views.extension));
-            debug ("Temp file created at: %s", tmpfilepath);
 
             // Init Recorder
-            recorder = new Recorder();
-            recorder.config(capture_mode,
-                            tmpfilepath,
+            session_recorder = new SessionRecorder();
+            session_recorder.config(capture_mode,
                             session_name,
-                            settings_views.framerate, 
-                            settings_views.speakers_record, 
+                            settings_views.framerate,
+                            settings_views.speakers_record,
                             settings_views.mic_record,
                             settings_views.pointer_switch.get_state(),
                             settings_views.format,
+                            settings_views.extension,
                             win);
 
-            // Delay before recording ?
+            // @TODO: remove support for countdown.
             if (settings_views.delay > 0) {
 
                 countdown = new Countdown (this, this.send_notification);
                 countdown.set_delay(settings_views.delay);
-                countdown.start(recorder, this, stack, record_view);
+                countdown.start(session_recorder, this, stack, record_view);
                 set_button_label (ButtonsLabelMode.COUNTDOWN);
                 set_button_tooltip (ButtonsTooltipMode.COUNTDOWN);
 
             } else {
 
-                recorder.start ();
-                record_view.set_recorder(recorder);
+                session_recorder.start_session ();
+                record_view.set_recorder(session_recorder);
                 record_view.init_count ();
                 stack.visible_child_name = "record";
                 send_notification.start();
@@ -470,25 +462,24 @@ namespace Workday {
             set_button_tooltip(ButtonsTooltipMode.SETTINGS);
 
             // Stop Recording
-            recorder.stop ();
+            session_recorder.stop_session ();
             record_view.stop_count ();
             stack.visible_child_name = "settings";
             present ();
 
-            File tmp_file = File.new_for_path (tmpfilepath);
-            var session_dir = this.get_session_dir (recorder.session_name);
-            string file_name = Path.build_filename (session_dir, "Full-%s%s".printf (recorder.session_name, settings_views.extension));
-            File save_file = File.new_for_path (file_name);
+            // File tmp_file = File.new_for_path (tmpfilepath);
+            // string file_name = Path.build_filename (session_recorder.get_session_dir (), "Full-%s%s".printf (session_recorder.session_name, settings_views.extension));
+            // File save_file = File.new_for_path (file_name);
 
-            try {
-                tmp_file.move (save_file, 0, cancellable, null);
-            } catch (Error e) {
-                print ("Error: %s\n", e.message);
-            }
+            // try {
+            //     tmp_file.move (save_file, 0, cancellable, null);
+            // } catch (Error e) {
+            //     print ("Error: %s\n", e.message);
+            // }
 
             settings_views.set_sensitive (false);
             Timeout.add (500, () => {
-                if (!recorder.is_recording) {
+                if (!session_recorder.is_recording) {
                     if (settings_views.close_switch.get_state()) {
                         close();
                     }
@@ -547,7 +538,7 @@ namespace Workday {
 
         public bool can_quit () {
 
-            if (recorder.is_recording_in_progress || countdown.is_active_cd) {
+            if (session_recorder.is_session_in_progress || countdown.is_active_cd) {
 
                 return false;
 
@@ -557,11 +548,5 @@ namespace Workday {
             }
         }
 
-        public string get_session_dir (string session_name) {
-            return Path.build_filename (
-                Environment.get_user_special_dir (UserDirectory.VIDEOS),
-                WorkdayApp.SAVE_FOLDER,
-                session_name);
-        }
     }
 }

@@ -5,6 +5,7 @@ sources = files (
     'Tools/KeybindingManager.vala',
     'Tools/Recorder.vala',
     'Tools/SendNotification.vala',
+    'Tools/SessionRecorder.vala',
 
     'Views/RecordView.vala',
     'Views/SettingsView.vala',

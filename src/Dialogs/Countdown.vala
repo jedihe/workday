@@ -67,7 +67,7 @@ namespace Workday {
             });
         }
 
-        public void start (Recorder? recorder, ScreenrecorderWindow? app, Gtk.Stack? stack, RecordView? record_view) {
+        public void start (SessionRecorder? session_recorder, ScreenrecorderWindow? app, Gtk.Stack? stack, RecordView? record_view) {
 
             this.is_active_cd = true;
             this.show_all ();
@@ -84,9 +84,9 @@ namespace Workday {
 
                         if (!is_canceled) {
 
-                            recorder.start ();
+                            session_recorder.start_session ();
                             stack.visible_child_name = "record";
-                            record_view.set_recorder(recorder);
+                            record_view.set_recorder(session_recorder);
                             record_view.init_count ();
                             send_notification.start();
                             this.is_active_cd = false;

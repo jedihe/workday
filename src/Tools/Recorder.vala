@@ -30,7 +30,6 @@ namespace Workday {
         ScreenrecorderWindow.CaptureType capture_mode;
         public Gdk.Window window;
         private string tmp_file;
-        public string session_name {get; private set; }
         private int framerate;
         private bool are_speakers_recorded;
         private bool is_mic_recorded;
@@ -81,7 +80,6 @@ namespace Workday {
 
         public void config (ScreenrecorderWindow.CaptureType capture_mode,
                             string tmp_file,
-                            string session_name,
                             int frame_rate,
                             bool record_speakers,
                             bool record_mic,
@@ -91,7 +89,6 @@ namespace Workday {
 
             this.capture_mode = capture_mode;
             this.tmp_file = tmp_file;
-            this.session_name = session_name;
             this.framerate = frame_rate;
             this.are_speakers_recorded = record_speakers;
             this.is_mic_recorded = record_mic;
@@ -534,6 +531,9 @@ namespace Workday {
                 pipeline.set_state (Gst.State.NULL);
                 break;
             case Gst.MessageType.EOS :
+                stdout.printf("On EOS message in pipeline\n");
+                this.print_pos(pipeline);
+                
                 pipeline.set_state (Gst.State.NULL);
 
                 this.is_recording = false;
@@ -625,7 +625,7 @@ namespace Workday {
             this.print_pos(pipeline);
 
             if (!this.is_recording) {
-                this.resume();
+                //this.resume();
             }
             pipeline.send_event (new Gst.Event.eos ());
             this.is_recording = false;

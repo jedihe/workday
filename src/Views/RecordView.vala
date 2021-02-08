@@ -25,7 +25,7 @@ namespace Workday {
         private uint count;
         private bool pause = false;
         private int seconds;
-        private Recorder recorder;
+        private SessionRecorder session_recorder;
 
 
         public RecordView () {
@@ -50,9 +50,9 @@ namespace Workday {
 
             pack_start (label_grid, false, false);
         }
-        
-        public void set_recorder(Recorder recorder) {
-            this.recorder = recorder;
+
+        public void set_recorder(SessionRecorder session_recorder) {
+            this.session_recorder = session_recorder;
         }
 
         public async void trigger_stop_recording () {
@@ -85,7 +85,7 @@ namespace Workday {
                     return false;
                 }
 
-                seconds = recorder.query_position();
+                seconds = session_recorder.query_position();
 
                 display_minutes = seconds / 60;
                 display_seconds = seconds % 60;
