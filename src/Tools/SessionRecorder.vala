@@ -78,13 +78,31 @@ namespace Workday {
             this.recorder = new Recorder();
             recorder.config (capture_mode,
                             fragment_file_path,
-                            framerate, 
-                            are_speakers_recorded, 
+                            framerate,
+                            are_speakers_recorded,
                             is_mic_recorded,
                             is_cursor_captured,
                             format,
                             this.window);
             recorder.start ();
+
+            // Auto-splitting mechanism, every 5min.
+            // @TODO: use the system clock to compare real elapsed time vs. total recorded time and compensate as necessary, by briefly stopping the recording.
+            Timeout.add_seconds (1, () => {
+                if (recorder.query_position () >= 300 - 2) {
+                    recorder.stop ();
+                    Timeout.add (1000, () => {
+                        if (!recorder.is_recording) {
+                            this.is_recording = true;
+                            start_fragment ();
+                            return false;
+                        }
+                        return true;
+                    });
+                    return false;
+                }
+                return true;
+            });
         }
 
         public void pause_session () {
