@@ -653,11 +653,11 @@ namespace Workday {
             int64 pos = this.pipeline_query_position();
             if (pos == -1) {
                 stdout.printf("Recorder.query_position(): using fallback_timer_count\n");
-                return fallback_timer_count;
+                return fallback_timer_count * 1000;
             }
             else {
                 stdout.printf("Recorder.query_position(): using pipeline_query_position()\n");
-                return (int) (pos / 1000000000);
+                return (int) (pos / 1000000);
             }
         }
 

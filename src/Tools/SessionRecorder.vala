@@ -33,6 +33,7 @@ namespace Workday {
 
         public bool is_recording { get; private set; default = false; }
         public bool is_session_in_progress { get; private set; default = false; }
+        private bool fragment_split_initiated { private get; private set; default = false; }
 
         private DateTime fragment_start_time;
 
@@ -91,23 +92,34 @@ namespace Workday {
             // Auto-splitting mechanism, every 5min.
             // @TODO: check if the recorder.pipeline provides a clock with msec resolution, which can be used instead of manually computing the timespan (which is also brittle, due to sleep/suspend times the computer may go through).
             Timeout.add_seconds (1, () => {
-                if (recorder.query_position () >= 300 - 2) {
-                    recorder.stop ();
+                if (recorder.query_position () >= (300 * 1000) - (2 * 1000) && !this.fragment_split_initiated) {
+                    this.fragment_split_initiated = true;
                     var timespan = new DateTime.now ().difference (this.fragment_start_time);
                     int next_fragment_delay = 300 * 1000 - (int) (timespan / 1000);
                     if (next_fragment_delay < 1) {
                         next_fragment_delay = 1;
                     }
+                    int stop_delay = next_fragment_delay - 100;
+                    if (stop_delay < 1) {
+                        stop_delay = 1;
+                    }
+                    stdout.printf("Fragment-splitting waits: stop_delay: %s; next_fragment_delay: %s\n", stop_delay.to_string(), next_fragment_delay.to_string());
+                    Timeout.add (stop_delay, () => {
+                        recorder.stop();
+                        return false;
+                    });
                     Timeout.add (next_fragment_delay, () => {
                         if (!recorder.is_recording) {
                             this.is_recording = true;
                             start_fragment ();
+                            this.fragment_split_initiated = false;
                         }
                         else {
                             Timeout.add (25, () => {
                                 if (!recorder.is_recording) {
                                     this.is_recording = true;
                                     start_fragment ();
+                                    this.fragment_split_initiated = false;
                                     return false;
                                 }
                                 return true;
@@ -157,7 +169,7 @@ namespace Workday {
 
         public int query_position () {
             if (this.is_recording) {
-                return this.recorder.query_position ();
+                return this.recorder.query_position () / 1000;
             }
 
             return 0;
