@@ -26,4 +26,4 @@ Get a minimally working version of Workday, working in elementary; ensure good s
     7. Auto-join fragments when the session is finalized.
         # Ref: http://gstreamer-devel.966125.n4.nabble.com/Using-concat-to-join-multiple-mp4-files-into-a-single-mp4-file-td4693799.html
         # Ref: http://gstreamer-devel.966125.n4.nabble.com/How-to-use-Concat-element-td4688916.html
-    8. Correct differences between real elapsed time vs. total recorded time
+    8. ~~Correct differences between real elapsed time vs. total recorded time~~

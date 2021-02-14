@@ -34,6 +34,8 @@ namespace Workday {
         public bool is_recording { get; private set; default = false; }
         public bool is_session_in_progress { get; private set; default = false; }
 
+        private DateTime fragment_start_time;
+
         private Recorder recorder;
 
         public SessionRecorder () {
@@ -67,9 +69,9 @@ namespace Workday {
         }
 
         private void start_fragment () {
-            DateTime now = new DateTime.now ();
+            this.fragment_start_time = new DateTime.now ();
             // @TODO: use milliseconds suffix on fragments?
-            var fragment_name = now.format ("%Y-%m-%d-%H-%M-%S");
+            var fragment_name = this.fragment_start_time.format ("%Y-%m-%d-%H-%M-%S");
             var session_dir = this.get_session_dir ();
             WorkdayApp.create_dir_if_missing (session_dir);
             var fragment_file_path = Path.build_filename (session_dir, "Workday-%s%s".printf (fragment_name, this.extension));
@@ -87,17 +89,31 @@ namespace Workday {
             recorder.start ();
 
             // Auto-splitting mechanism, every 5min.
-            // @TODO: use the system clock to compare real elapsed time vs. total recorded time and compensate as necessary, by briefly stopping the recording.
+            // @TODO: check if the recorder.pipeline provides a clock with msec resolution, which can be used instead of manually computing the timespan (which is also brittle, due to sleep/suspend times the computer may go through).
             Timeout.add_seconds (1, () => {
                 if (recorder.query_position () >= 300 - 2) {
                     recorder.stop ();
-                    Timeout.add (1000, () => {
+                    var timespan = new DateTime.now ().difference (this.fragment_start_time);
+                    int next_fragment_delay = 300 * 1000 - (int) (timespan / 1000);
+                    if (next_fragment_delay < 1) {
+                        next_fragment_delay = 1;
+                    }
+                    Timeout.add (next_fragment_delay, () => {
                         if (!recorder.is_recording) {
                             this.is_recording = true;
                             start_fragment ();
-                            return false;
                         }
-                        return true;
+                        else {
+                            Timeout.add (25, () => {
+                                if (!recorder.is_recording) {
+                                    this.is_recording = true;
+                                    start_fragment ();
+                                    return false;
+                                }
+                                return true;
+                            });
+                        }
+                        return false;
                     });
                     return false;
                 }
