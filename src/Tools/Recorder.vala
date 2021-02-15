@@ -643,8 +643,10 @@ namespace Workday {
         }
 
         private int64 pipeline_query_position() {
-            int64 position;
-            pipeline.query_position(Gst.Format.TIME, out position);
+            int64 position = -1;
+            if (this.is_recording) {
+                pipeline.query_position(Gst.Format.TIME, out position);
+            }
 
             return position;
         }

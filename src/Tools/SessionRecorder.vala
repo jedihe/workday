@@ -110,7 +110,7 @@ namespace Workday {
             // @TODO: check if the recorder.pipeline provides a clock with msec resolution, which can be used instead of manually computing the timespan (which is also brittle, due to sleep/suspend times the computer may go through).
             int max_fragment_duration = 8 * 1000; // msec.
             Timeout.add_seconds (1, () => {
-                if (recorder.query_position () >= (max_fragment_duration) - (2 * 1000) && !this.fragment_split_initiated) {
+                if (this.is_session_in_progress && recorder.is_recording && recorder.query_position () >= (max_fragment_duration) - (2 * 1000) && !this.fragment_split_initiated) {
                     this.fragment_split_initiated = true;
                     var timespan = new DateTime.now ().difference (this.fragment_start_time);
                     int next_fragment_delay = max_fragment_duration - (int) (timespan / 1000);
@@ -136,7 +136,7 @@ namespace Workday {
                         }
                         else {
                             Timeout.add (25, () => {
-                                if (!recorder.is_recording) {
+                                if (!recorder.is_recording && this.is_session_in_progress) {
                                     this.is_recording = true;
                                     start_fragment ();
                                     this.fragment_split_initiated = false;
@@ -150,7 +150,7 @@ namespace Workday {
                     });
                     return false;
                 }
-                return true;
+                return this.is_session_in_progress;
             });
         }
 
@@ -158,11 +158,8 @@ namespace Workday {
             recorder.stop ();
 
             Timeout.add (450, () => {
-                if (!recorder.is_recording) {
-                    this.is_recording = false;
-                    return false;
-                }
-                return true;
+                this.is_recording = recorder.is_recording;
+                return this.is_recording;
             });
         }
 
@@ -175,15 +172,14 @@ namespace Workday {
 
         public void stop_session () {
             if (this.is_recording || this.is_session_in_progress) {
-                recorder.stop();
+                if (!this.fragment_split_initiated) {
+                    recorder.stop();
+                }
+                this.is_session_in_progress = false;
 
                 Timeout.add (450, () => {
-                    if (!recorder.is_recording) {
-                        this.is_recording = false;
-                        this.is_session_in_progress = false;
-                        return false;
-                    }
-                    return true;
+                    this.is_recording = recorder.is_recording;
+                    return this.is_recording;
                 });
             }
         }
@@ -258,7 +254,7 @@ namespace Workday {
         private void update_resolved_fragments_total () {
             int total = 0;
             foreach (var frag_info in this.fragments_info.values) {
-                if (frag_info.is_resolved && !frag_info.is_invalid) {
+                if (frag_info.is_resolved && !frag_info.is_invalid && frag_info.name in this.found_fragments) {
                     total += frag_info.duration;
                 }
             }

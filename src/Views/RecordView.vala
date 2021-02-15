@@ -77,6 +77,7 @@ namespace Workday {
         private void start_count () {
 
             count = Timeout.add (1000, () => {
+                stdout.printf ("On RecordView.start_count () - Timeout.add ()\n");
                 int display_minutes;
                 int display_seconds;
 
@@ -91,7 +92,7 @@ namespace Workday {
                 display_seconds = seconds % 60;
 
                 show_timer_label (time_label, display_minutes / 10, display_minutes % 10, display_seconds / 10, display_seconds % 10);
-                return true;
+                return session_recorder.is_session_in_progress;
             });
         }
 
