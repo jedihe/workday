@@ -268,7 +268,8 @@ namespace Workday {
             Dir dir = Dir.open(session_dir);
             string? name = null;
             while ((name = dir.read_name ()) != null) {
-                if (Regex.match_simple ("Workday-[0-9-]*.mp4", name)) {
+                string fragment_pattern = "Workday-[0-9-]*%s$".printf (this.extension);
+                if (Regex.match_simple (fragment_pattern, name)) {
                     string path = Path.build_filename (session_dir, name);
                     if (FileUtils.test (path, FileTest.IS_REGULAR)) {
                         fragments.add (name);
