@@ -35,6 +35,7 @@ dependencies = [
     dependency ('x11'),
     dependency ('gdk-x11-3.0'),
     dependency ('gstreamer-1.0'),
+    dependency ('gstreamer-pbutils-1.0'),
     dependency ('clutter-gst-3.0'),
     dependency ('clutter-gtk-1.0')
 ]

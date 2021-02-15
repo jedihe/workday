@@ -531,9 +531,9 @@ namespace Workday {
                 pipeline.set_state (Gst.State.NULL);
                 break;
             case Gst.MessageType.EOS :
-                stdout.printf("On EOS message in pipeline\n");
-                this.print_pos(pipeline);
-                
+                // stdout.printf("On EOS message in pipeline\n");
+                // this.print_pos(pipeline);
+
                 pipeline.set_state (Gst.State.NULL);
 
                 this.is_recording = false;
@@ -634,11 +634,11 @@ namespace Workday {
             stdout.printf("After processing Recorder.stop()\n");
             this.print_pos(pipeline);
         }
-        
+
         private void start_fallback_timer() {
             Timeout.add (1000, () => {
                 fallback_timer_count++;
-                return this.pipeline_query_position() == -1;
+                return this.is_recording && this.pipeline_query_position() == -1;
             });
         }
 
