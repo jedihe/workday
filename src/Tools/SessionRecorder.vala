@@ -107,8 +107,8 @@ namespace Workday {
             recorder.start ();
 
             // Auto-splitting mechanism, every 5min.
-            // @TODO: check if the recorder.pipeline provides a clock with msec resolution, which can be used instead of manually computing the timespan (which is also brittle, due to sleep/suspend times the computer may go through).
-            int max_fragment_duration = 8 * 1000; // msec.
+            // @TODO: check if the recorder.pipeline provides a clock with msec resolution, which can be used instead of manually computing the timespan (which is unreliable, due to sleep/suspend times the computer may go through).
+            int max_fragment_duration = 300 * 1000; // msec.
             Timeout.add_seconds (1, () => {
                 if (this.is_session_in_progress && recorder.is_recording && recorder.query_position () >= (max_fragment_duration) - (2 * 1000) && !this.fragment_split_initiated) {
                     this.fragment_split_initiated = true;
@@ -143,7 +143,7 @@ namespace Workday {
                                     this.update_fragments_info ();
                                     return false;
                                 }
-                                return true;
+                                return this.is_session_in_progress;
                             });
                         }
                         return false;
