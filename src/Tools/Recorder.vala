@@ -123,6 +123,8 @@ namespace Workday {
 
             pipeline = new Gst.Pipeline ("screencast-pipe");
 
+            // gst-launch pipeline, with splitmuxsink used at the end:
+            // gst-launch-1.0 ximagesrc use-damage=0 show-pointer=1 ! queue ! videorate ! video/x-raw, framerate=1/2 ! videoconvert ! video/x-raw,format=I420 ! videoconvert ! x264enc speed-preset=1 pass=4 quantizer=15 threads=4 bitrate=120 key-int-max=15 ! splitmuxsink location=fragment-%02d.mp4 max-size-time=60000000000 send-keyframe-requests=1 async-finalize=1
             setup_video_source ();
             setup_audio_sources ();
             setup_filesink ();
