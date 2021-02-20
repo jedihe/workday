@@ -36,6 +36,17 @@ dependencies = [
     dependency ('gdk-x11-3.0'),
     dependency ('gstreamer-1.0'),
     dependency ('gstreamer-pbutils-1.0'),
+# gstreamer-plugins-good is missing .vapi definitions, potentially-useful links:
+# - https://github.com/elementary/code/issues/678
+# - https://gi.readthedocs.io/en/latest/buildsystems/meson.html
+# - https://gitlab.freedesktop.org/gstreamer/gst-plugins-good
+# - https://gitlab.gnome.org/GNOME/vala/ (GStreamer bindings are bundled with Vala itself)
+# - https://mail.gnome.org/archives/vala-list/2011-May/msg00060.html (using extern C code)
+# - https://developer.gnome.org/gtk-tutorial/stable/x159.html (g_signal_connect() signature)
+# - https://wiki.gnome.org/Projects/Vala/Bindings
+# - sudo apt install libgstreamer-plugins-good1.0-dev (to install -dev library)
+# In summary: better to wait for upstream to generate .vapi bindings
+    #dependency ('gstreamer-plugins-good-1.0'),
     dependency ('clutter-gst-3.0'),
     dependency ('clutter-gtk-1.0')
 ]

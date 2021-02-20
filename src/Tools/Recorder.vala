@@ -23,6 +23,12 @@
  * Authored by: Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
  */
 
+// Doesn't build...
+// extern gulong g_signal_connect( gpointer      *object,
+//                                 const gchar   *name,
+//                                 GCallback     func,
+//                                 gpointer      func_data );
+
 namespace Workday {
 
     public class Recorder : GLib.Object {
@@ -30,6 +36,7 @@ namespace Workday {
         ScreenrecorderWindow.CaptureType capture_mode;
         public Gdk.Window window;
         private string tmp_file;
+        private string session_dir;
         private int framerate;
         private bool are_speakers_recorded;
         private bool is_mic_recorded;
@@ -46,6 +53,7 @@ namespace Workday {
         public int height { get; private set; }
 
         dynamic Gst.Pipeline pipeline;
+        private Gst.Element split_mux_file;
         private Gst.Element mux;
         private Gst.Element videnc;
         private Gst.Element sink;
@@ -79,7 +87,7 @@ namespace Workday {
         }
 
         public void config (ScreenrecorderWindow.CaptureType capture_mode,
-                            string tmp_file,
+                            string session_dir,
                             int frame_rate,
                             bool record_speakers,
                             bool record_mic,
@@ -88,7 +96,7 @@ namespace Workday {
                             Gdk.Window? window) {
 
             this.capture_mode = capture_mode;
-            this.tmp_file = tmp_file;
+            this.session_dir = session_dir;
             this.framerate = frame_rate;
             this.are_speakers_recorded = record_speakers;
             this.is_mic_recorded = record_mic;
@@ -103,6 +111,15 @@ namespace Workday {
                 warning (e.message);
             }
             this.cpu_cores = int.parse (cores.substring (2));
+
+            var fragment_start_time = new DateTime.now ();
+            // @TODO: use milliseconds suffix on fragments?
+            var fragment_suffix = fragment_start_time.format ("%Y-%m-%d-%H-%M-%S");
+            // @TODO: take .mp4 (extension) from SessionRecoder.
+            this.tmp_file = Path.build_filename (
+                this.session_dir,
+                "Workday-%s%s".printf (fragment_suffix, ".mp4")
+            );
 
             pipeline = new Gst.Pipeline ("screencast-pipe");
 
@@ -287,6 +304,16 @@ namespace Workday {
                 mux = Gst.ElementFactory.make("avimux", "muxer");
             }
 
+            split_mux_file = Gst.ElementFactory.make("splitmuxsink", "split_mux_file");
+            split_mux_file.set_property("location", "/home/jedihe/Videos/Workday/video%02d.mp4");
+            split_mux_file.set_property("max-size-time", 12000000000);
+            split_mux_file.set_property("send-keyframe-requests", 1);
+            split_mux_file.set_property("async-finalize", 1);
+            // Gstreamer good plugins is missing .vapi bindings, see root meson.build for details.
+            // split_mux_file.format_location.connect((fragment_id, udata) => {
+            //     stdout.printf ("format-location signal, fragment_id: %s", fragment_id.to_string());
+            // });
+
             vid_in_queue = Gst.ElementFactory.make("queue", "queue_v1");
             vid_out_queue = Gst.ElementFactory.make("queue", "queue_v2");
         }
@@ -348,9 +375,9 @@ namespace Workday {
             debug("setup_filesink \n");
             debug("tmp_file location : " + this.tmp_file);
 
-            sink = Gst.ElementFactory.make ("filesink", "sink");
-            sink.set ("location", this.tmp_file);
-            file_queue = Gst.ElementFactory.make ("queue", "queue_file");
+            // sink = Gst.ElementFactory.make ("filesink", "sink");
+            // sink.set ("location", this.tmp_file);
+            // file_queue = Gst.ElementFactory.make ("queue", "queue_file");
 
         }
 
@@ -405,6 +432,8 @@ namespace Workday {
 
             re = pipeline.add(mux);
             debug("pipeline.add(mux); -> " + re.to_string());
+            
+            pipeline.add(split_mux_file);
 
             pipeline.add(sink);
         }
@@ -465,8 +494,9 @@ namespace Workday {
                 debug("videnc.link(vid_out_queue); -> " + re.to_string());
             }
 
-            re = vid_out_queue.link(mux);
-            debug("vid_out_queue.link(mux); -> " + re.to_string());
+            //re = vid_out_queue.link(mux);
+            re = vid_out_queue.link(split_mux_file);
+            debug("vid_out_queue.link(split_mux_file); -> " + re.to_string());
             
 
             if (are_speakers_recorded && is_mic_recorded) {
@@ -507,14 +537,14 @@ namespace Workday {
                 // Link audio to muxer
                 audioconv.link(audioenc);
                 audioenc.link(aud_out_queue);
-                aud_out_queue.link(mux);
+                aud_out_queue.link(split_mux_file);
             }
 
-            re = mux.link(file_queue);
-            debug("mux.link(file_queue); -> " + re.to_string());
-            
-            re = file_queue.link(sink);
-            debug("file_queue.link(sink); -> " + re.to_string());
+            // re = mux.link(file_queue);
+            // debug("mux.link(file_queue); -> " + re.to_string());
+            // 
+            // re = file_queue.link(sink);
+            // debug("file_queue.link(sink); -> " + re.to_string());
         }
 
         private bool bus_message_cb (Gst.Bus bus, Gst.Message msg) {
