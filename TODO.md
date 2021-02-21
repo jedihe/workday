@@ -23,8 +23,9 @@ Get a minimally working version of Workday, working in elementary; ensure good s
     4. ~~Store recordings as fragments~~
     5. ~~Auto-split fragments every 5 min~~
     6. ~~Consolidate total recording time from old + current fragment~~
-    7. Auto-join fragments when the session is finalized.
-        # Ref: http://gstreamer-devel.966125.n4.nabble.com/Using-concat-to-join-multiple-mp4-files-into-a-single-mp4-file-td4693799.html
-        # Ref: http://gstreamer-devel.966125.n4.nabble.com/How-to-use-Concat-element-td4688916.html
+    7. ~~Auto-join fragments when the session is finalized.~~
+        * Ref: http://gstreamer-devel.966125.n4.nabble.com/Using-concat-to-join-multiple-mp4-files-into-a-single-mp4-file-td4693799.html
+        * Ref: http://gstreamer-devel.966125.n4.nabble.com/How-to-use-Concat-element-td4688916.html
     8. ~~Correct differences between real elapsed time vs. total recorded time~~
     9. Record only one of the screens, not the composite of all the screens.
+    10. Switch sessions on the fly.
