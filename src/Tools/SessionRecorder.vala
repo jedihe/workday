@@ -179,6 +179,11 @@ namespace Workday {
 
                 Timeout.add (450, () => {
                     this.is_recording = recorder.is_recording;
+                    if (!this.is_recording) {
+                        if (this.join_full_session ()) {
+                            this.delete_fragments ();
+                        }
+                    }
                     return this.is_recording;
                 });
             }
@@ -299,6 +304,43 @@ namespace Workday {
             foreach (var item in list) {
                 stdout.printf ("  " + item + "\n");
             }
+        }
+
+        private bool join_full_session () {
+            string command = "for file in Workday-*; do echo \"file $file\" >> workday-file-list.txt; done && ffmpeg -f concat -i workday-file-list.txt -codec copy Full-%s.mp4 && rm workday-file-list.txt".printf (this.session_name);
+            return this.run_cli(this.get_session_dir (), command) == 0;
+        }
+
+        private void delete_fragments () {
+            this.run_cli (this.get_session_dir (), "rm Workday-*.mp4");
+        }
+
+        private int run_cli (string cwd, string command) {
+            int cmd_status;
+            try {
+                string[] spawn_args = {
+                    "/bin/bash",
+                    "-c",
+                    command
+                };
+                string[] spawn_env = Environ.get ();
+                string cmd_stdout;
+                string cmd_stderr;
+
+                Process.spawn_sync (cwd,
+                    spawn_args,
+                    spawn_env,
+                    SpawnFlags.SEARCH_PATH,
+                    null,
+                    out cmd_stdout,
+                    out cmd_stderr,
+                    out cmd_status
+                );
+            } catch (SpawnError e) {
+                cmd_status = 1;
+	        }
+
+	        return cmd_status;
         }
     }
 }
