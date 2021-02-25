@@ -29,3 +29,4 @@ Get a minimally working version of Workday, working in elementary; ensure good s
     8. ~~Correct differences between real elapsed time vs. total recorded time~~
     9. Record only one of the screens, not the composite of all the screens.
     10. Switch sessions on the fly.
+    11. Ignore symlinks when discovering fragments
