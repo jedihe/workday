@@ -253,10 +253,11 @@ namespace Workday {
                     cpu_cores = 4;
                 }
 
-                videnc.set_property("speed-preset", 1); // ultrafast
+                videnc.set_property("speed-preset", 3); // veryfast
                 videnc.set_property("pass", 4);
-                videnc.set_property("quantizer", 15);
+                videnc.set_property("quantizer", 18);
                 videnc.set_property("threads", cpu_cores);
+                videnc.set_property("key-int-max", 15); // 15 frames @ 0.5fps == 30sec
                 mux = Gst.ElementFactory.make("mp4mux", "muxer");
                 mux.set_property("faststart", 1);
                 mux.set_property("faststart-file", this.tmp_file + ".mux");
