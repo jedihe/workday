@@ -32,6 +32,10 @@
         <key name="folder-dir" type="s">
             <default>""</default>
         </key>
+        <key name="fragment-length" type="i">
+            <range min="10" max="600"/>
+            <default>300</default>
+        </key>
         <key name='last-capture-mode' enum='com.github.jedihe.workday.capture-mode'>
             <default>"screen"</default>
         </key>

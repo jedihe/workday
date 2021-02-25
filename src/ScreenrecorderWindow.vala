@@ -428,6 +428,7 @@ namespace Workday {
                             settings_views.pointer_switch.get_state(),
                             settings_views.format,
                             settings_views.extension,
+                            WorkdayApp.settings.get_int ("fragment-length"),
                             win);
 
             // @TODO: remove support for countdown.

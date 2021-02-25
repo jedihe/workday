@@ -39,6 +39,7 @@ namespace Workday {
         private bool is_cursor_captured;
         private string format;
         private string extension;
+        public int fragment_length; // seconds.
 
         public bool is_recording { get; private set; default = false; }
         public bool is_session_in_progress { get; private set; default = false; }
@@ -63,6 +64,7 @@ namespace Workday {
                             bool capture_cursor,
                             string format,
                             string extension,
+                            int fragment_length,
                             Gdk.Window? window) {
 
             this.capture_mode = capture_mode;
@@ -73,6 +75,7 @@ namespace Workday {
             this.is_cursor_captured = capture_cursor;
             this.format = format;
             this.extension = extension;
+            this.fragment_length = fragment_length;
             this.window = window;
         }
 
@@ -106,9 +109,9 @@ namespace Workday {
                             this.window);
             recorder.start ();
 
-            // Auto-splitting mechanism, every 5min.
+            // Auto-splitting mechanism, every fragment_length seconds.
             // @TODO: check if the recorder.pipeline provides a clock with msec resolution, which can be used instead of manually computing the timespan (which is unreliable, due to sleep/suspend times the computer may go through).
-            int max_fragment_duration = 300 * 1000; // msec.
+            int max_fragment_duration = this.fragment_length * 1000; // msec.
             Timeout.add_seconds (1, () => {
                 if (this.is_session_in_progress && recorder.is_recording && recorder.query_position () >= (max_fragment_duration) - (2 * 1000) && !this.fragment_split_initiated) {
                     this.fragment_split_initiated = true;
