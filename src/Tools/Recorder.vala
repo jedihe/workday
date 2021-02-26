@@ -539,6 +539,7 @@ namespace Workday {
                 pipeline.set_state (Gst.State.NULL);
 
                 this.is_recording = false;
+                this.is_recording_in_progress = false;
 
                 //save_file ();
                 pipeline.dispose ();
@@ -630,8 +631,6 @@ namespace Workday {
                 //this.resume();
             }
             pipeline.send_event (new Gst.Event.eos ());
-            this.is_recording = false;
-            this.is_recording_in_progress = false;
 
             stdout.printf("After processing Recorder.stop()\n");
             this.print_pos(pipeline);
