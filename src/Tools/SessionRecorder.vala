@@ -162,6 +162,10 @@ namespace Workday {
 
             Timeout.add (450, () => {
                 this.is_recording = recorder.is_recording;
+                if (!this.is_recording) {
+                    // stdout.printf ("pause_session (): Updating fragments info...\n");
+                    this.update_fragments_info ();
+                }
                 return this.is_recording;
             });
         }
@@ -211,7 +215,7 @@ namespace Workday {
             this.found_fragments = this.find_fragment_files ();
             var unresolved_fragments = this.get_unresolved_fragments ();
 
-            if (this.current_fragment_name != "") {
+            if (this.current_fragment_name != "" && this.is_recording) {
                 unresolved_fragments.remove (this.current_fragment_name);
             }
             // print_list ("Unresolved fragments:", unresolved_fragments);
