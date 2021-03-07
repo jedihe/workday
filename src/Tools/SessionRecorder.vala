@@ -283,7 +283,8 @@ namespace Workday {
                 string fragment_pattern = "Workday-[0-9-]*%s$".printf (this.extension);
                 if (Regex.match_simple (fragment_pattern, name)) {
                     string path = Path.build_filename (session_dir, name);
-                    if (FileUtils.test (path, FileTest.IS_REGULAR)) {
+                    if (FileUtils.test (path, FileTest.IS_REGULAR) &&
+                        !FileUtils.test (path, FileTest.IS_SYMLINK)) {
                         fragments.add (name);
                     }
                 }
