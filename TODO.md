@@ -28,5 +28,7 @@ Get a minimally working version of Workday, working in elementary; ensure good s
         * Ref: http://gstreamer-devel.966125.n4.nabble.com/How-to-use-Concat-element-td4688916.html
     8. ~~Correct differences between real elapsed time vs. total recorded time~~
     9. Record only one of the screens, not the composite of all the screens.
-    10. Switch sessions on the fly.
-    11. Ignore symlinks when discovering fragments
+    10. Store current duration in sess-dir/.workday-session, update every X seconds (configurable). Delete this file when closing a session.
+    11. Detect in-progress sessions by scanning all session dirs for .workday-session files.
+    12. Switch sessions on the fly.
+    13. ~~Ignore symlinks when discovering fragments~~
