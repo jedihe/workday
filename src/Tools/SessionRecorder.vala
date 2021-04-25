@@ -44,6 +44,7 @@ namespace Workday {
         public bool is_recording { get; private set; default = false; }
         public bool is_session_in_progress { get; private set; default = false; }
         private bool fragment_split_initiated { private get; private set; default = false; }
+        private uint session_file_update_timeout_source;
 
         private DateTime fragment_start_time;
         private string current_fragment_name;
@@ -87,6 +88,7 @@ namespace Workday {
             this.found_fragments = new ArrayList<string> ();
             this.fragments_info = new HashMap<string, FragmentInfo?> ();
             this.update_session_file ();
+            this.schedule_session_file_update ();
         }
 
         private void start_fragment () {
@@ -169,6 +171,7 @@ namespace Workday {
                 }
                 return this.is_recording;
             });
+            this.stop_scheduled_session_file_update ();
         }
 
         public void resume_session () {
@@ -176,6 +179,7 @@ namespace Workday {
                 this.start_fragment ();
                 this.is_recording = true;
             }
+            this.schedule_session_file_update ();
         }
 
         public void stop_session () {
@@ -196,6 +200,7 @@ namespace Workday {
                     return this.is_recording;
                 });
             }
+            this.stop_scheduled_session_file_update ();
         }
 
         public int query_position () {
@@ -203,7 +208,7 @@ namespace Workday {
                 return this.resolved_fragments_total / 1000 + this.recorder.query_position () / 1000;
             }
 
-            return this.resolved_fragments_total;
+            return this.resolved_fragments_total / 1000;
         }
 
         public string get_session_dir () {
@@ -284,6 +289,20 @@ namespace Workday {
             }
             var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
             dos.put_string ( this.query_position ().to_string ());
+        }
+
+        private void schedule_session_file_update () {
+            int interval = (int) GLib.Math.fminf ( (float) this.fragment_length, (float) 30.0);
+            stdout.printf ("====> Scheduling session_file_update(), every %s seconds\n", interval.to_string ());
+            this.session_file_update_timeout_source = Timeout.add_seconds ( interval, () => {
+                stdout.printf ("====> Running scheduled session_file_update()\n");
+                update_session_file ();
+                return this.is_recording;
+            });
+        }
+
+        private void stop_scheduled_session_file_update () {
+            GLib.Source.remove (this.session_file_update_timeout_source);
         }
 
         private void delete_session_file () {
