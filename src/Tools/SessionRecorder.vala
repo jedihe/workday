@@ -86,6 +86,7 @@ namespace Workday {
 
             this.found_fragments = new ArrayList<string> ();
             this.fragments_info = new HashMap<string, FragmentInfo?> ();
+            this.update_session_file ();
         }
 
         private void start_fragment () {
@@ -190,6 +191,7 @@ namespace Workday {
                         if (this.join_full_session ()) {
                             this.delete_fragments ();
                         }
+                        this.delete_session_file ();
                     }
                     return this.is_recording;
                 });
@@ -271,6 +273,24 @@ namespace Workday {
                 }
             }
             this.resolved_fragments_total = total;
+
+            this.update_session_file ();
+        }
+
+        private void update_session_file () {
+            var file = File.new_for_path (Path.build_filename (this.get_session_dir (), ".workday-session"));
+            if (file.query_exists ()) {
+                file.delete ();
+            }
+            var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
+            dos.put_string ( this.query_position ().to_string ());
+        }
+
+        private void delete_session_file () {
+            var file = File.new_for_path (Path.build_filename (this.get_session_dir (), ".workday-session"));
+            if (file.query_exists ()) {
+                file.delete ();
+            }
         }
 
         private ArrayList<string> find_fragment_files () {
