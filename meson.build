@@ -26,6 +26,11 @@ asresources = gnome.compile_resources (
     c_name: 'as'
 )
 
+# Resolve the math library, to use as dependency.
+# See https://mesonbuild.com/howtox.html#add-math-library-lm-portably
+cc = meson.get_compiler('c')
+m_dep = cc.find_library('m', required: false)
+
 # Listing dependencies
 dependencies = [
     dependency ('glib-2.0'),
@@ -37,7 +42,8 @@ dependencies = [
     dependency ('gstreamer-1.0'),
     dependency ('gstreamer-pbutils-1.0'),
     dependency ('clutter-gst-3.0'),
-    dependency ('clutter-gtk-1.0')
+    dependency ('clutter-gtk-1.0'),
+    m_dep
 ]
 
 subdir ('src')
