@@ -144,6 +144,10 @@ namespace Workday {
             stack.add_named (settings_views, "settings");
             stack.add_named (record_view, "record");
             stack.visible_child_name = "settings";
+            record_view.request_new_session.connect (() => {
+                this.stop_recording (false);
+                this.populate_sessions_popover (prev_sessions);
+            });
 
             // Right Button
             right_button = new Gtk.Button.with_label (_("Record Screen"));
@@ -230,7 +234,6 @@ namespace Workday {
 
                     stop_recording ();
                     send_notification.stop();
-                    
 
                 } else if (!session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
@@ -479,7 +482,7 @@ namespace Workday {
             capture_type_grid.set_sensitive (false);
         }
 
-        void stop_recording () {
+        void stop_recording (bool finish = true) {
             Cancellable cancellable = new Cancellable ();
 
             // Update Buttons
@@ -487,7 +490,7 @@ namespace Workday {
             set_button_tooltip(ButtonsTooltipMode.SETTINGS);
 
             // Stop Recording
-            session_recorder.stop_session ();
+            session_recorder.stop_session (finish);
             record_view.stop_count ();
             stack.visible_child_name = "settings";
             present ();
