@@ -78,6 +78,22 @@ namespace Workday {
             this.extension = extension;
             this.fragment_length = fragment_length;
             this.window = window;
+
+            var session_file = File.new_for_path (Path.build_filename (
+                this.get_session_dir (),
+                ".workday-session"
+            ));
+            if (session_file.query_exists ()) {
+                try {
+                    var dis = new DataInputStream (session_file.read ());
+                    string line;
+                    if ((line = dis.read_line (null)) != null) {
+                        this.resolved_fragments_total = int.parse (line) * 1000;
+                    }
+                } catch (Error e) {
+                    error ("%s", e.message);
+                }
+            }
         }
 
         public void start_session () {

@@ -85,7 +85,7 @@ namespace Workday {
         }
 
         private void start_count () {
-
+            back_button.set_sensitive (false);
             count = Timeout.add (1000, () => {
                 stdout.printf ("On RecordView.start_count () - Timeout.add ()\n");
                 int display_minutes;

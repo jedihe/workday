@@ -60,6 +60,7 @@ namespace Workday {
         private Gtk.RadioButton all;
         private Gtk.RadioButton curr_window;
         private Gtk.RadioButton selection;
+        private Gtk.MenuButton prev_sessions;
 
         //Actons Buttons
         public Gtk.Button right_button;
@@ -117,7 +118,7 @@ namespace Workday {
             selection.image = new Gtk.Image.from_icon_name ("grab-area-symbolic", Gtk.IconSize.DND);
             selection.tooltip_text = _("Select area to grab");
 
-            var prev_sessions = new Gtk.MenuButton();
+            this.prev_sessions = new Gtk.MenuButton();
             prev_sessions.set_image (new Gtk.Image.from_icon_name ("folder-open-symbolic", Gtk.IconSize.DND));
             prev_sessions.tooltip_text = _("Resume a previous session");
 
@@ -146,7 +147,7 @@ namespace Workday {
             stack.visible_child_name = "settings";
             record_view.request_new_session.connect (() => {
                 this.stop_recording (false);
-                this.populate_sessions_popover (prev_sessions);
+                this.populate_sessions_popover (this.prev_sessions);
             });
 
             // Right Button
@@ -390,14 +391,14 @@ namespace Workday {
             }
         } 
 
-        void capture_screen () {
+        void capture_screen (string? forced_session_name = null) {
 
             this.win = Gdk.get_default_root_window ();
             this.iconify ();
-            start_recording (this.win);
+            start_recording (this.win, forced_session_name);
         }
 
-        void capture_window () {
+        void capture_window (string? forced_session_name = null) {
 
             Gdk.Screen screen = null;
             GLib.List<Gdk.Window> list = null;
@@ -415,13 +416,13 @@ namespace Workday {
                 }
 
                 if (this.win != null) {
-                    start_recording (win);
+                    start_recording (win, forced_session_name);
                 }
                 return false;
             });
         }
 
-        void capture_area () {
+        void capture_area (string? forced_session_name = null) {
 
             var selection_area = new Screenshot.Widgets.SelectionArea ();
             selection_area.show_all ();
@@ -437,18 +438,18 @@ namespace Workday {
 
                 selection_area.close ();
                 this.iconify ();
-                start_recording (this.win);
+                start_recording (this.win, forced_session_name);
             });
         }
 
-        void start_recording (Gdk.Window? win) {
+        void start_recording (Gdk.Window? win, string? forced_session_name = null) {
             DateTime now = new DateTime.now ();
-            var session_name = now.format ("%Y-%m-%d-%H-%M-%S");
+            var new_session_name = now.format ("%Y-%m-%d-%H-%M-%S");
 
             // Init Recorder
             session_recorder = new SessionRecorder();
             session_recorder.config(capture_mode,
-                            session_name,
+                            forced_session_name != null ? forced_session_name : new_session_name,
                             settings_views.framerate,
                             settings_views.speakers_record,
                             settings_views.mic_record,
@@ -511,6 +512,7 @@ namespace Workday {
                     if (settings_views.close_switch.get_state()) {
                         close();
                     }
+                    this.populate_sessions_popover (this.prev_sessions);
                     settings_views.set_sensitive (true);
                     capture_type_grid.set_sensitive (true);
                     return false;
@@ -578,6 +580,19 @@ namespace Workday {
 
         private void on_session_resume (GLib.SimpleAction action, GLib.Variant? param) {
             stdout.printf ("Triggered action: %s, with param: %s\n", action.get_name (), param.get_string ());
+
+            var session_name = param.get_string ();
+            switch (capture_mode) {
+                case CaptureType.SCREEN:
+                    capture_screen (session_name);
+                    break;
+                case CaptureType.CURRENT_WINDOW:
+                    capture_window (session_name);
+                    break;
+                case CaptureType.AREA:
+                    capture_area (session_name);
+                    break;
+            }
         }
 
         private void populate_sessions_popover (Gtk.MenuButton prev_sessions_button) {
