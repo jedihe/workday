@@ -22,10 +22,13 @@ namespace Workday {
     public class RecordView : Gtk.Box {
 
         private Gtk.Label time_label;
+        private Gtk.Button back_button;
         private uint count;
         private bool pause = false;
         private int seconds;
         private SessionRecorder session_recorder;
+
+        public signal void request_new_session ();
 
 
         public RecordView () {
@@ -39,14 +42,21 @@ namespace Workday {
 
         construct {
 
-            time_label = new Gtk.Label (null);
+            time_label = new Gtk.Label (null) {
+                hexpand = true
+            };
             time_label.get_style_context ().add_class (Granite.STYLE_CLASS_H2_LABEL);
+            back_button = new Gtk.Button.with_label ("New Session") {
+                halign = Gtk.Align.START
+            };
+            back_button.get_style_context ().add_class (Granite.STYLE_CLASS_BACK_BUTTON);
+            back_button.set_sensitive (false);
+            back_button.clicked.connect (() => request_new_session ());
 
             var label_grid = new Gtk.Grid ();
             label_grid.column_spacing = 6;
-            label_grid.row_spacing = 6;
-            label_grid.halign = Gtk.Align.CENTER;
-            label_grid.attach (time_label, 0, 1, 1, 1);
+            label_grid.attach (back_button, 0, 1, 1, 1);
+            label_grid.attach (time_label, 0, 2, 1, 1);
 
             pack_start (label_grid, false, false);
         }
@@ -100,12 +110,14 @@ namespace Workday {
 
             pause = true;
             count = 0;
+            back_button.set_sensitive (true);
         }
 
         public void resume_count () {
 
             pause = false;
             start_count ();
+            back_button.set_sensitive (false);
         }
 
         public void stop_count () {
