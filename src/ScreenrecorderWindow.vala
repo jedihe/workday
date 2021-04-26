@@ -22,6 +22,8 @@
  *              Stevy THOMAS (dr_Styki) <dr_Styki@hack.i.ng>
  */
 
+using Gee;
+
 namespace Workday {
 
     public class ScreenrecorderWindow : Gtk.ApplicationWindow  {
@@ -45,6 +47,12 @@ namespace Workday {
             RECORDING_PAUSED,
             SETTINGS
         }
+
+        struct SessionInfo {
+            public string name;
+            public int duration; // msec.
+        }
+        private HashMap<string, SessionInfo?> sessions_info;
 
         public CaptureType capture_mode = CaptureType.SCREEN;
         private Gtk.Grid capture_type_grid;
@@ -85,6 +93,7 @@ namespace Workday {
         }
 
         construct {
+            this.sessions_info = new HashMap<string, SessionInfo?> ();
 
             set_keep_above (true);
             // Load Settings
@@ -112,34 +121,11 @@ namespace Workday {
             prev_sessions.set_image (new Gtk.Image.from_icon_name ("folder-open-symbolic", Gtk.IconSize.DND));
             prev_sessions.tooltip_text = _("Resume a previous session");
 
-            var item1 = new Gtk.ModelButton () {
-                hexpand = true,
-                text = _("Item 1")
-            };
-            item1.set_detailed_action_name ("win.session_resume::2021-item1");
-
-            var item2 = new Gtk.ModelButton () {
-                hexpand = true,
-                text = _("Item 2")
-            };
-            item2.set_detailed_action_name ("win.session_resume::2021-item2");
-
-            var popover_grid = new Gtk.Grid ();
-            popover_grid.margin_top = popover_grid.margin_bottom = 3;
-            popover_grid.orientation = Gtk.Orientation.VERTICAL;
-            popover_grid.add (item1);
-            popover_grid.add (item2);
-            popover_grid.show_all ();
-
-            var prev_sessions_popover = new Gtk.Popover (null);
-            prev_sessions_popover.modal = true;
-            prev_sessions_popover.add (popover_grid);
+            this.populate_sessions_popover (prev_sessions);
 
             var session_actions = new GLib.SimpleActionGroup ();
             session_actions.add_action_entries (this.prev_sess_action_entries, this);
             this.insert_action_group ("win", session_actions);
-
-            prev_sessions.popover = prev_sessions_popover;
 
             capture_type_grid = new Gtk.Grid ();
             capture_type_grid.halign = Gtk.Align.CENTER;
@@ -589,6 +575,81 @@ namespace Workday {
 
         private void on_session_resume (GLib.SimpleAction action, GLib.Variant? param) {
             stdout.printf ("Triggered action: %s, with param: %s\n", action.get_name (), param.get_string ());
+        }
+
+        private void populate_sessions_popover (Gtk.MenuButton prev_sessions_button) {
+            this.sessions_info.clear ();
+
+            // Find session-dirs.
+            // Find .workday-session files in each session-dir, read content as integer (seconds).
+            var sessions_dir = File.new_for_path (Path.build_filename (
+                Environment.get_user_special_dir (UserDirectory.VIDEOS),
+                WorkdayApp.SAVE_FOLDER));
+            FileEnumerator enumerator = sessions_dir.enumerate_children (
+                "standard::*",
+                FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+
+            FileInfo info = null;
+            while (((info = enumerator.next_file ()) != null)) {
+                if (info.get_file_type () == FileType.DIRECTORY) {
+                    File session_file = sessions_dir.resolve_relative_path (Path.build_filename (info.get_name (), ".workday-session"));
+                    if (session_file.query_exists ()) {
+                        try {
+                            var dis = new DataInputStream (session_file.read ());
+                            string line;
+                            // Read lines until end of file (null) is reached
+                            if ((line = dis.read_line (null)) != null) {
+                                var session_info = SessionInfo () {
+                                    name = info.get_name (),
+                                    duration = int.parse (line)
+                                };
+                                sessions_info.set (info.get_name(), session_info);
+                            }
+                        } catch (Error e) {
+                            error ("%s", e.message);
+                        }
+                    }
+                }
+            }
+
+            var popover_grid = new Gtk.Grid ();
+            popover_grid.margin_top = popover_grid.margin_bottom = 3;
+            popover_grid.orientation = Gtk.Orientation.VERTICAL;
+
+            if (sessions_info.size == 0) {
+                var empty_btn = new Gtk.ModelButton () {
+                    hexpand = true,
+                    text = _("- No Pending Sessions -")
+                };
+                empty_btn.set_sensitive (false);
+                popover_grid.add (empty_btn);
+            }
+            else {
+                foreach (string sess_name in sessions_info.keys) {
+                    var sess_duration = sessions_info.get (sess_name).duration;
+                    int hours = sess_duration / 3600;
+                    int minutes = (sess_duration % 3600) / 60;
+                    string duration_label = "%s%s".printf (
+                        hours > 0 ? hours.to_string () + "h " : "",
+                        minutes.to_string () + "m"
+                    );
+                    var sess_btn = new Gtk.ModelButton () {
+                        hexpand = true,
+                        text = "%s // %s".printf (sess_name, duration_label)
+                    };
+                    sess_btn.set_detailed_action_name ("win.session_resume::" + sess_name);
+
+                    popover_grid.add (sess_btn);
+                }
+            }
+
+            popover_grid.show_all ();
+
+            var prev_sessions_popover = new Gtk.Popover (null);
+            prev_sessions_popover.modal = true;
+            prev_sessions_popover.add (popover_grid);
+
+            prev_sessions_button.popover = prev_sessions_popover;
         }
     }
 }
