@@ -72,6 +72,10 @@ namespace Workday {
         private bool save_dialog_present = false;
         public SendNotification send_notification;
 
+        private const GLib.ActionEntry[] prev_sess_action_entries = {
+            {"session_resume",    on_session_resume, "s"}
+        };
+
         public ScreenrecorderWindow (Gtk.Application app){
             Object (
                 application: app,
@@ -112,14 +116,13 @@ namespace Workday {
                 hexpand = true,
                 text = _("Item 1")
             };
-            item1.clicked.connect ((button) => {
-                stdout.printf ("item1 props: %s", );
-            });
+            item1.set_detailed_action_name ("win.session_resume::2021-item1");
 
             var item2 = new Gtk.ModelButton () {
                 hexpand = true,
                 text = _("Item 2")
             };
+            item2.set_detailed_action_name ("win.session_resume::2021-item2");
 
             var popover_grid = new Gtk.Grid ();
             popover_grid.margin_top = popover_grid.margin_bottom = 3;
@@ -131,6 +134,10 @@ namespace Workday {
             var prev_sessions_popover = new Gtk.Popover (null);
             prev_sessions_popover.modal = true;
             prev_sessions_popover.add (popover_grid);
+
+            var session_actions = new GLib.SimpleActionGroup ();
+            session_actions.add_action_entries (this.prev_sess_action_entries, this);
+            this.insert_action_group ("win", session_actions);
 
             prev_sessions.popover = prev_sessions_popover;
 
@@ -580,5 +587,8 @@ namespace Workday {
             }
         }
 
+        private void on_session_resume (GLib.SimpleAction action, GLib.Variant? param) {
+            stdout.printf ("Triggered action: %s, with param: %s\n", action.get_name (), param.get_string ());
+        }
     }
 }
