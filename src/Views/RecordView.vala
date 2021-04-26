@@ -73,21 +73,25 @@ namespace Workday {
         public void init_count () {
             seconds = 0;
             pause = false;
-            show_timer_label (time_label, 0, 0, 0, 0);
+            show_timer_label (time_label, 0, 0, 0);
             start_count ();
         }
 
-        private void show_timer_label (Gtk.Label label, int minutes_10, int minutes_1, int seconds_10, int seconds_1) {
+        private void show_timer_label (Gtk.Label label, int hours, int minutes, int seconds) {
 
-            label.label = "<span size='64000' weight='normal'>%i%i</span><span size='24000' weight='normal'>:%i%i</span>".printf (minutes_10, minutes_1, seconds_10, seconds_1);
+            string hhmm = hours > 0 ?
+                "%d:%02d".printf (hours, minutes) :
+                "%02d".printf (minutes);
+            label.label = "<span size='64000' weight='normal'>%s</span><span size='24000' weight='normal'>:%02d</span>".printf (hhmm, seconds);
             label.use_markup = true;
             label.margin_top = 20;
         }
 
         private void start_count () {
             back_button.set_sensitive (false);
-            count = Timeout.add (1000, () => {
+            count = Timeout.add_seconds (1, () => {
                 stdout.printf ("On RecordView.start_count () - Timeout.add ()\n");
+                int display_hours;
                 int display_minutes;
                 int display_seconds;
 
@@ -98,10 +102,11 @@ namespace Workday {
 
                 seconds = session_recorder.query_position();
 
-                display_minutes = seconds / 60;
+                display_hours = seconds / 3600;
+                display_minutes = (seconds % 3600) / 60;
                 display_seconds = seconds % 60;
 
-                show_timer_label (time_label, display_minutes / 10, display_minutes % 10, display_seconds / 10, display_seconds % 10);
+                show_timer_label (time_label, display_hours, display_minutes, display_seconds);
                 return session_recorder.is_session_in_progress;
             });
         }
