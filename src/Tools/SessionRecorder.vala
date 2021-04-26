@@ -182,23 +182,25 @@ namespace Workday {
             this.schedule_session_file_update ();
         }
 
-        public void stop_session () {
+        public void stop_session (bool finish = true) {
             if (this.is_recording || this.is_session_in_progress) {
                 if (!this.fragment_split_initiated) {
                     recorder.stop();
                 }
                 this.is_session_in_progress = false;
 
-                Timeout.add (450, () => {
-                    this.is_recording = recorder.is_recording;
-                    if (!this.is_recording) {
-                        if (this.join_full_session ()) {
-                            this.delete_fragments ();
+                if (finish) {
+                    Timeout.add (450, () => {
+                        this.is_recording = recorder.is_recording;
+                        if (!this.is_recording) {
+                            if (this.join_full_session ()) {
+                                this.delete_fragments ();
+                            }
+                            this.delete_session_file ();
                         }
-                        this.delete_session_file ();
-                    }
-                    return this.is_recording;
-                });
+                        return this.is_recording;
+                    });
+                }
             }
             this.stop_scheduled_session_file_update ();
         }
