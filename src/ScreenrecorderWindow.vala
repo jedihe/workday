@@ -104,6 +104,34 @@ namespace Workday {
             selection.image = new Gtk.Image.from_icon_name ("grab-area-symbolic", Gtk.IconSize.DND);
             selection.tooltip_text = _("Select area to grab");
 
+            var prev_sessions = new Gtk.Button();
+            prev_sessions.set_image (new Gtk.Image.from_icon_name ("folder-open-symbolic", Gtk.IconSize.DND));
+            prev_sessions.tooltip_text = _("Resume a previous session");
+
+            var prev_sessions_menu = new GLib.Menu ();
+            var item1 = new GLib.MenuItem ("item 1", "session.resume('session1')");
+            // TODO: find out how to respond to clicks to GLib.MenuItem widgets.
+            // item1.activate.connect ((menu_item) => {
+            //     stdout.printf("Action name: %s, action target: %s, action target value: %s\n",
+            //         menu_item.action_name,
+            //         menu_item.action_target,
+            //         menu_item.get_action_target_value ()
+            //     );
+            // });
+            var item2 = new GLib.MenuItem ("item 2", "session.resume('session2')");
+            prev_sessions_menu.append_item (item1);
+            prev_sessions_menu.append_item (item2);
+
+            var prev_sessions_popover = new Gtk.Popover(prev_sessions);
+            prev_sessions_popover.position = Gtk.PositionType.BOTTOM;
+            prev_sessions_popover.set_size_request (384, -1);
+            prev_sessions_popover.modal = true;
+            prev_sessions_popover.bind_model (prev_sessions_menu, null);
+
+            prev_sessions.clicked.connect (() => {
+                prev_sessions_popover.set_visible (true);
+            });
+
             capture_type_grid = new Gtk.Grid ();
             capture_type_grid.halign = Gtk.Align.CENTER;
             capture_type_grid.column_spacing = 24;
@@ -112,6 +140,7 @@ namespace Workday {
             capture_type_grid.add (all);
             capture_type_grid.add (curr_window);
             capture_type_grid.add (selection);
+            capture_type_grid.add (prev_sessions);
 
             // Views
             settings_views = new SettingsView (this);
