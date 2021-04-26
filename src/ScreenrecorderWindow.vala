@@ -651,10 +651,15 @@ namespace Workday {
                         hours > 0 ? hours.to_string () + "h " : "",
                         minutes.to_string () + "m"
                     );
+                    var sess_lbl = new Gtk.Label ("<span size='12000' weight='normal'>%s</span>\n%s".printf (sess_name, duration_label)) {
+                        use_markup = true
+                    };
                     var sess_btn = new Gtk.ModelButton () {
                         hexpand = true,
-                        text = "%s // %s".printf (sess_name, duration_label)
+                        text = ""
                     };
+                    sess_btn.get_child ().destroy ();
+                    sess_btn.add (sess_lbl);
                     sess_btn.set_detailed_action_name ("win.session_resume::" + sess_name);
 
                     popover_grid.add (sess_btn);
