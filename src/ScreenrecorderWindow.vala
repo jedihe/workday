@@ -652,7 +652,8 @@ namespace Workday {
                         minutes.to_string () + "m"
                     );
                     var sess_lbl = new Gtk.Label ("<span size='12000' weight='normal'>%s</span>\n%s".printf (sess_name, duration_label)) {
-                        use_markup = true
+                        use_markup = true,
+                        halign = Gtk.Align.START
                     };
                     var sess_btn = new Gtk.ModelButton () {
                         hexpand = true,
