@@ -29,7 +29,7 @@ namespace Workday {
                 // Mouse pointer and close switch
             public Gtk.Switch pointer_switch;
             public Gtk.Switch close_switch;
-    
+
                 // Audio
             private Gtk.CheckButton record_speakers_btn;
             private Gtk.CheckButton record_mic_btn;
@@ -58,7 +58,10 @@ namespace Workday {
             public string extension;
 
             private Gtk.Entry session_name_ent;
-            public string new_session_name;
+            public string new_session_name {
+                get { return this.session_name_ent.text; }
+                set { this.session_name_ent.text = value; }
+            }
 
             // Settings Grid
             private Gtk.Grid sub_grid;
@@ -242,6 +245,5 @@ namespace Workday {
             // Bind Settings - End
 
         }
-
     }
 }
