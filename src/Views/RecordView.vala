@@ -43,7 +43,8 @@ namespace Workday {
         construct {
 
             time_label = new Gtk.Label (null) {
-                hexpand = true
+                hexpand = true,
+                justify = Gtk.Justification.CENTER
             };
             time_label.get_style_context ().add_class (Granite.STYLE_CLASS_H2_LABEL);
             back_button = new Gtk.Button.with_label ("New Session") {
@@ -79,10 +80,13 @@ namespace Workday {
 
         private void show_timer_label (Gtk.Label label, int hours, int minutes, int seconds) {
 
+            string trimmed_sess_name = "%.20s%s".printf (
+                this.session_recorder.session_name,
+                this.session_recorder.session_name.length > 20 ? "…" : "");
             string hhmm = hours > 0 ?
                 "%d:%02d".printf (hours, minutes) :
                 "%02d".printf (minutes);
-            label.label = "<span size='64000' weight='normal'>%s</span><span size='24000' weight='normal'>:%02d</span>".printf (hhmm, seconds);
+            label.label = "<span size='15000'>%s</span>\n<span size='64000' weight='normal'>%s</span><span size='24000' weight='normal'>:%02d</span>".printf (trimmed_sess_name, hhmm, seconds);
             label.use_markup = true;
             label.margin_top = 20;
         }
