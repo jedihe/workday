@@ -673,11 +673,21 @@ namespace Workday {
 
             popover_grid.show_all ();
 
+            var scrolled_box = new Gtk.ScrolledWindow (null, null) {
+                hscrollbar_policy = Gtk.PolicyType.NEVER,
+                max_content_height = 268,
+                propagate_natural_height = true
+            };
+            scrolled_box.add (popover_grid);
+            scrolled_box.show_all ();
+
             var prev_sessions_popover = new Gtk.Popover (null);
             prev_sessions_popover.modal = true;
-            prev_sessions_popover.add (popover_grid);
+            prev_sessions_popover.add (scrolled_box);
+            // prev_sessions_popover.set_position (Gtk.PositionType.RIGHT);
 
             prev_sessions_button.popover = prev_sessions_popover;
+            // prev_sessions_button.direction = Gtk.ArrowType.RIGHT;
         }
     }
 }
