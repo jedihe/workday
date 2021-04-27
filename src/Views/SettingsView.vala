@@ -39,10 +39,10 @@ namespace Workday {
             private Gtk.Image mic_icon_mute;
             public bool speakers_record = false;
             public bool mic_record = false;
-    
+
             public int delay;
             public int framerate;
-    
+
                 // Format
             private enum Column {
                 CODEC_GSK,
@@ -56,7 +56,10 @@ namespace Workday {
             private Gtk.ComboBox format_cmb;
             public string format;
             public string extension;
-    
+
+            private Gtk.Entry session_name_ent;
+            public string new_session_name;
+
             // Settings Grid
             private Gtk.Grid sub_grid;
 
@@ -67,7 +70,10 @@ namespace Workday {
                 orientation: Gtk.Orientation.VERTICAL,
                 spacing: 12,
                 window: window,
-                margin: 0
+                margin: 0,
+                valign: Gtk.Align.CENTER,
+                margin_top: 10,
+                margin_bottom: 10
             );
         }
 
@@ -178,12 +184,20 @@ namespace Workday {
             }
             // Format Combo Box - End
 
+            var new_session_name_lbl = new Gtk.Label(_("Session Name:"));
+            new_session_name_lbl.halign = Gtk.Align.END;
+            session_name_ent = new Gtk.Entry () {
+                placeholder_text = _("(Auto)"),
+                width_chars = 18
+            };
+
             // Sub Grid, all switch/checkbox/combobox/spin
             // except Actions.
             sub_grid = new Gtk.Grid ();
+            sub_grid.column_homogeneous = true;
             sub_grid.halign = Gtk.Align.CENTER;
             sub_grid.margin = 0;
-            sub_grid.row_spacing = 6;
+            sub_grid.row_spacing = 12;
             sub_grid.column_spacing = 12;
             sub_grid.attach (pointer_label     , 0, 1, 1, 1);
             sub_grid.attach (pointer_switch    , 1, 1, 1, 1);
@@ -191,12 +205,14 @@ namespace Workday {
             sub_grid.attach (close_switch      , 1, 2, 1, 1);
             //sub_grid.attach (audio_label       , 0, 3, 1, 1);
             //sub_grid.attach (audio_grid        , 1, 3, 1, 1);
-            sub_grid.attach (delay_label       , 0, 4, 1, 1);
-            sub_grid.attach (delay_spin        , 1, 4, 1, 1);
+            sub_grid.attach (delay_label       , 0, 3, 1, 1);
+            sub_grid.attach (delay_spin        , 1, 3, 1, 1);
             //sub_grid.attach (framerate_label   , 0, 5, 1, 1);
             //sub_grid.attach (framerate_spin    , 1, 5, 1, 1);
-            sub_grid.attach (format_label       , 0, 6, 1, 1);
-            sub_grid.attach (format_cmb    , 1, 6, 1, 1);
+            sub_grid.attach (format_label       , 0, 4, 1, 1);
+            sub_grid.attach (format_cmb    , 1, 4, 1, 1);
+            sub_grid.attach (new_session_name_lbl, 0, 5, 1, 1);
+            sub_grid.attach (session_name_ent, 1, 5, 1, 1);
 
             add(sub_grid);
 
