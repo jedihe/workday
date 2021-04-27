@@ -151,7 +151,7 @@ namespace Workday {
             });
 
             // Right Button
-            right_button = new Gtk.Button.with_label (_("Record Screen"));
+            right_button = new Gtk.Button.with_label (_("Start Session"));
             right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
             right_button.can_default = true;
             this.set_default (right_button);
@@ -369,21 +369,21 @@ namespace Workday {
                     break;
 
                 case ButtonsLabelMode.RECORDING:
-                    right_button.set_label (_("Stop Recording"));
+                    right_button.set_label (_("End Session"));
                     right_button.get_style_context ().remove_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
                     right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Pause"));
                     break;
 
                 case ButtonsLabelMode.RECORDING_PAUSED:
-                    right_button.set_label (_("Stop Recording"));
+                    right_button.set_label (_("End Session"));
                     right_button.get_style_context ().remove_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
                     right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Resume"));
                     break;
 
                 case ButtonsLabelMode.SETTINGS:
-                    right_button.set_label (_("Record Screen"));
+                    right_button.set_label (_("Start Session"));
                     right_button.get_style_context ().remove_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
                     right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
                     left_button.set_label (_("Close"));
