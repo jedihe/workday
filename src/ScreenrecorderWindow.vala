@@ -219,17 +219,21 @@ namespace Workday {
 
                 if (!session_recorder.is_recording && !countdown.is_active_cd && !session_recorder.is_session_in_progress) {
 
+                    string? new_sess_name = settings_views.new_session_name.length > 0 ?
+                        settings_views.new_session_name :
+                        null;
                     switch (capture_mode) {
                         case CaptureType.SCREEN:
-                            capture_screen ();
+                            capture_screen (new_sess_name);
                             break;
                         case CaptureType.CURRENT_WINDOW:
-                            capture_window ();
+                            capture_window (new_sess_name);
                             break;
                         case CaptureType.AREA:
-                            capture_area ();
+                            capture_area (new_sess_name);
                             break;
                     }
+                    settings_views.new_session_name = "";
 
                 } else if (session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
