@@ -613,7 +613,8 @@ namespace Workday {
 
             FileInfo info = null;
             while (((info = enumerator.next_file ()) != null)) {
-                if (info.get_file_type () == FileType.DIRECTORY) {
+                string session_name_pattern = "^[a-zA-Z0-9-_]+$";
+                if (info.get_file_type () == FileType.DIRECTORY && Regex.match_simple (session_name_pattern, info.get_name ())) {
                     File session_file = sessions_dir.resolve_relative_path (Path.build_filename (info.get_name (), ".workday-session"));
                     if (session_file.query_exists ()) {
                         try {
