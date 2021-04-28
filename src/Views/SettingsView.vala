@@ -190,9 +190,23 @@ namespace Workday {
             var new_session_name_lbl = new Gtk.Label(_("Session Name:"));
             new_session_name_lbl.halign = Gtk.Align.END;
             session_name_ent = new Gtk.Entry () {
-                placeholder_text = _("(Auto)"),
+                placeholder_text = _("(Automatic)"),
                 width_chars = 18
             };
+            // Filter out unwanted characters from the session name.
+            session_name_ent.changed.connect (() => {
+                var new_text = session_name_ent.text;
+                var regex = new GLib.Regex ("[^a-zA-Z0-9-_]");
+                var filtered_text = regex.replace_literal (new_text, -1, 0, "");
+                if (filtered_text.length < new_text.length && session_name_ent.cursor_position < filtered_text.length) {
+                    Idle.add (() => {
+                        session_name_ent.move_cursor (Gtk.MovementStep.LOGICAL_POSITIONS, -1, false);
+                        return false;
+                    });
+                }
+                // Set the filtered_text *after* checking if we should move the cursor.
+                session_name_ent.text = filtered_text;
+            });
 
             // Sub Grid, all switch/checkbox/combobox/spin
             // except Actions.
