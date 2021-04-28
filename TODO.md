@@ -16,7 +16,7 @@ Get a minimally working version of Workday, working in elementary; ensure good s
         3. Timer, accumulating old + current fragment
         4. Joining of final file (ffmpeg)
 3. MVP implementation plan:
-    1. ~~Hardcode 0.5 fpx~~
+    1. ~~Hardcode 0.5 fps~~
     2. ~~Store recordings in \~/Videos/Workday~~
     2. ~~Store tmp file in the session dir~~
     3. ~~Store recordings in the session dir~~
@@ -32,4 +32,5 @@ Get a minimally working version of Workday, working in elementary; ensure good s
     11. ~~Detect in-progress sessions by scanning all session dirs for .workday-session files.~~
     12. ~~Switch sessions on the fly.~~
     13. ~~Ignore symlinks when discovering fragments~~
-    14. Allow setting the session name for new sessions.
+    14. ~~Allow setting the session name for new sessions~~.
+    15. Sort the list of in-progress sessions, shown in the popover.
