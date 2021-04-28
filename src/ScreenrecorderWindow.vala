@@ -324,6 +324,12 @@ namespace Workday {
             });
 
             update_icons (gtk_settings.gtk_application_prefer_dark_theme);
+
+            var root_win = Gdk.get_default_root_window ();
+            Gdk.Rectangle selection_rect;
+            root_win.get_frame_extents (out selection_rect);
+            stdout.printf ("Root Window: %i, %i\n", selection_rect.width, selection_rect.height);
+            stdout.printf ("Num monitors: %i\n", Gdk.Screen.get_default ().get_n_monitors ());
         }
 
         private void update_icons (bool prefers_dark) {

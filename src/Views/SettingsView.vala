@@ -194,6 +194,7 @@ namespace Workday {
                 width_chars = 18
             };
             // Filter out unwanted characters from the session name.
+            // TODO: try to prevent cursor flashing, probably by doing this: https://stackoverflow.com/a/16567697
             session_name_ent.changed.connect (() => {
                 var new_text = session_name_ent.text;
                 var regex = new GLib.Regex ("[^a-zA-Z0-9-_]");
