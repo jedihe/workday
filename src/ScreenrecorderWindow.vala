@@ -330,6 +330,27 @@ namespace Workday {
             root_win.get_frame_extents (out selection_rect);
             stdout.printf ("Root Window: %i, %i\n", selection_rect.width, selection_rect.height);
             stdout.printf ("Num monitors: %i\n", Gdk.Screen.get_default ().get_n_monitors ());
+
+            var scr = Gdk.Screen.get_default ();
+            var num_monitors = scr.get_n_monitors ();
+            stdout.printf ("Default screen, size: %i x %i\n", scr.get_width (), scr.get_height ());
+            stdout.printf ("  Num monitors: %i\n", num_monitors);
+
+            var disp = scr.get_display ();
+            stdout.printf ("Display name: %s\n", disp.get_name ());
+            num_monitors = disp.get_n_monitors ();
+            stdout.printf ("  Num monitors: %i\n", num_monitors);
+            var monitor_rect = new Gdk.Rectangle ();
+            Gdk.Monitor monitor;
+            for (var i_disp = 0; i_disp < num_monitors; i_disp++) {
+                stdout.printf ("Checking monitor %i\n", i_disp);
+                monitor = disp.get_monitor (i_disp);
+                if (monitor != null) {
+                    monitor_rect = monitor.get_geometry ();
+                    stdout.printf ("  Misc: manufacturer: %s, model: %s\n", monitor.manufacturer, monitor.model);
+                    stdout.printf ("  Rect: %i x %i @ %i, %i\n", monitor_rect.width, monitor_rect.height, monitor_rect.x, monitor_rect.y);
+                }
+            }
         }
 
         private void update_icons (bool prefers_dark) {
