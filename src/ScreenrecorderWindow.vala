@@ -99,7 +99,7 @@ namespace Workday {
             set_keep_above (true);
             // Load Settings
             GLib.Settings settings = WorkdayApp.settings;
-            
+
             // Init recorder and countdown objects for boolean test 
             send_notification = new SendNotification(this);
             session_recorder = new SessionRecorder();
@@ -201,16 +201,19 @@ namespace Workday {
             all.toggled.connect (() => {
                 capture_mode = CaptureType.SCREEN;
                 settings.set_enum ("last-capture-mode", capture_mode);
+                settings_views.update_widgets_visibility ();
             });
 
             curr_window.toggled.connect (() => {
                 capture_mode = CaptureType.CURRENT_WINDOW;
                 settings.set_enum ("last-capture-mode", capture_mode);
+                settings_views.update_widgets_visibility ();
             });
 
             selection.toggled.connect (() => {
                 capture_mode = CaptureType.AREA;
                 settings.set_enum ("last-capture-mode", capture_mode);
+                settings_views.update_widgets_visibility ();
             });
             // Bind Settings - End
 
@@ -325,32 +328,7 @@ namespace Workday {
 
             update_icons (gtk_settings.gtk_application_prefer_dark_theme);
 
-            var root_win = Gdk.get_default_root_window ();
-            Gdk.Rectangle selection_rect;
-            root_win.get_frame_extents (out selection_rect);
-            stdout.printf ("Root Window: %i, %i\n", selection_rect.width, selection_rect.height);
-            stdout.printf ("Num monitors: %i\n", Gdk.Screen.get_default ().get_n_monitors ());
-
-            var scr = Gdk.Screen.get_default ();
-            var num_monitors = scr.get_n_monitors ();
-            stdout.printf ("Default screen, size: %i x %i\n", scr.get_width (), scr.get_height ());
-            stdout.printf ("  Num monitors: %i\n", num_monitors);
-
-            var disp = scr.get_display ();
-            stdout.printf ("Display name: %s\n", disp.get_name ());
-            num_monitors = disp.get_n_monitors ();
-            stdout.printf ("  Num monitors: %i\n", num_monitors);
-            var monitor_rect = new Gdk.Rectangle ();
-            Gdk.Monitor monitor;
-            for (var i_disp = 0; i_disp < num_monitors; i_disp++) {
-                stdout.printf ("Checking monitor %i\n", i_disp);
-                monitor = disp.get_monitor (i_disp);
-                if (monitor != null) {
-                    monitor_rect = monitor.get_geometry ();
-                    stdout.printf ("  Misc: manufacturer: %s, model: %s\n", monitor.manufacturer, monitor.model);
-                    stdout.printf ("  Rect: %i x %i @ %i, %i\n", monitor_rect.width, monitor_rect.height, monitor_rect.x, monitor_rect.y);
-                }
-            }
+            settings_views.update_widgets_visibility ();
         }
 
         private void update_icons (bool prefers_dark) {
@@ -712,10 +690,8 @@ namespace Workday {
             var prev_sessions_popover = new Gtk.Popover (null);
             prev_sessions_popover.modal = true;
             prev_sessions_popover.add (scrolled_box);
-            // prev_sessions_popover.set_position (Gtk.PositionType.RIGHT);
 
             prev_sessions_button.popover = prev_sessions_popover;
-            // prev_sessions_button.direction = Gtk.ArrowType.RIGHT;
         }
     }
 }

@@ -12,6 +12,7 @@ sources = files (
 
     'Widgets/SelectionArea.vala',
     'Widgets/VideoPlayer.vala',
+    'Widgets/MonitorLabelWindow.vala',
 
     'Application.vala',
     'ScreenrecorderWindow.vala'
