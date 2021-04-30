@@ -351,19 +351,32 @@ namespace Workday {
             this.screen_cmb.append ("all", _("All Monitors"));
             screen_cmb.set_active_id ("all");
 
+            Gee.ArrayList<int> prioritized_monitor_nums = new Gee.ArrayList<int> ();
             var scr = Gdk.Screen.get_default ();
             var disp = scr.get_display ();
             this.is_multi_monitor = disp.get_n_monitors () > 1;
             Gdk.Monitor monitor;
             var monitor_rect = Gdk.Rectangle ();
-            for (var i = 0; this.is_multi_monitor && i < disp.get_n_monitors (); i++) {
-                monitor = disp.get_monitor (i);
-                if (monitor != null) {
-                    monitor_rect = monitor.get_geometry ();
-                    string serialized_rect = this.serialize_rectangle (monitor_rect);
-                    string monitor_name = _("Monitor") + " %i".printf (i+1);
-                    this.monitor_rects.set (monitor_name, monitor_rect);
-                    this.screen_cmb.append (serialized_rect, monitor_name);
+            if (this.is_multi_monitor) {
+                // Ensure the primary monitor to be "Monitor 1", no matter the order coming from Gdk.
+                for (var i = 0; i < disp.get_n_monitors (); i++) {
+                    monitor = disp.get_monitor (i);
+                    if (monitor.is_primary ()) {
+                        prioritized_monitor_nums.insert (0, i);
+                        // stdout.printf ("Primary monitor: %i\n", i);
+                    } else {
+                        prioritized_monitor_nums.add (i);
+                    }
+                }
+                for (var i = 0; i < prioritized_monitor_nums.size; i++) {
+                    monitor = disp.get_monitor (prioritized_monitor_nums.get (i));
+                    if (monitor != null) {
+                        monitor_rect = monitor.get_geometry ();
+                        string serialized_rect = this.serialize_rectangle (monitor_rect);
+                        string monitor_name = _("Monitor") + " %i".printf (i+1);
+                        this.monitor_rects.set (monitor_name, monitor_rect);
+                        this.screen_cmb.append (serialized_rect, monitor_name);
+                    }
                 }
             }
             stdout.printf ("monitor_rects.size == %i\n", this.monitor_rects.size);
