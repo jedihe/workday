@@ -39,5 +39,8 @@
         <key name='last-capture-mode' enum='com.github.jedihe.workday.capture-mode'>
             <default>"screen"</default>
         </key>
+        <key name="screen-capture-area" type="s">
+            <default>"all"</default>
+        </key>
     </schema>
 </schemalist>

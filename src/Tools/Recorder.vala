@@ -29,6 +29,7 @@ namespace Workday {
 
         ScreenrecorderWindow.CaptureType capture_mode;
         public Gdk.Window window;
+        public Gdk.Rectangle capture_rect { get; private set; }
         private string tmp_file;
         private int framerate;
         private bool are_speakers_recorded;
@@ -75,7 +76,7 @@ namespace Workday {
         private int cpu_cores;
 
 
-        public Recorder (){
+        public Recorder () {
         }
 
         public void config (ScreenrecorderWindow.CaptureType capture_mode,
@@ -85,7 +86,8 @@ namespace Workday {
                             bool record_mic,
                             bool capture_cursor,
                             string format,
-                            Gdk.Window? window) {
+                            Gdk.Window? window,
+                            Gdk.Rectangle? capture_rect) {
 
             this.capture_mode = capture_mode;
             this.tmp_file = tmp_file;
@@ -95,6 +97,7 @@ namespace Workday {
             this.is_cursor_captured = capture_cursor;
             this.format = format;
             this.window = window;
+            this.capture_rect = capture_rect;
 
             string cores = "0-1";
             try {
@@ -121,17 +124,20 @@ namespace Workday {
 
             videosrc = Gst.ElementFactory.make("ximagesrc", "video_src");
 
-            Gdk.Rectangle selection_rect;
-            this.window.get_frame_extents (out selection_rect);
-            
-            this.width = selection_rect.width;
-            this.height = selection_rect.height;
-            
+            if (this.window != null) {
+                Gdk.Rectangle tmp_rect = Gdk.Rectangle ();
+                this.window.get_frame_extents (out tmp_rect);
+                capture_rect = tmp_rect;
+            }
+
+            this.width = capture_rect.width;
+            this.height = capture_rect.height;
+
             if (capture_mode == ScreenrecorderWindow.CaptureType.SCREEN || 
                 capture_mode == ScreenrecorderWindow.CaptureType.AREA) {
 
-                this.startx = selection_rect.x;
-                this.starty = selection_rect.y;
+                this.startx = capture_rect.x;
+                this.starty = capture_rect.y;
                 this.endx = this.startx + this.width - 1;
                 this.endy = this.starty + this.height - 1;
 

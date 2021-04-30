@@ -285,6 +285,7 @@ namespace Workday {
             add(sub_grid);
 
             // Bind Settings - Start
+            settings.bind ("screen-capture-area", screen_cmb, "active_id", GLib.SettingsBindFlags.DEFAULT);
             settings.bind ("mouse-pointer", pointer_switch, "active", GLib.SettingsBindFlags.DEFAULT);
             settings.bind ("close-on-save", close_switch, "active", GLib.SettingsBindFlags.DEFAULT);
             settings.bind ("record-computer", record_speakers_btn, "active", GLib.SettingsBindFlags.DEFAULT);
@@ -349,7 +350,6 @@ namespace Workday {
             Gdk.get_default_root_window ().get_frame_extents (out capture_rect);
             // string all_item_id = this.serialize_rectangle (capture_rect);
             this.screen_cmb.append ("all", _("All Monitors"));
-            screen_cmb.set_active_id ("all");
 
             Gee.ArrayList<int> prioritized_monitor_nums = new Gee.ArrayList<int> ();
             var scr = Gdk.Screen.get_default ();
@@ -381,6 +381,12 @@ namespace Workday {
             }
             stdout.printf ("monitor_rects.size == %i\n", this.monitor_rects.size);
 
+            string last_screen_selected = settings.get_string ("screen-capture-area");
+            if (!this.screen_cmb.set_active_id (last_screen_selected)) {
+                this.screen_cmb.set_active_id ("all");
+            }
+            stdout.printf ("Auto-selecting capture area: %s\n", this.screen_cmb.get_active_id ());
+
             // Update sub_grid layout.
             this.sub_grid.row_spacing = this.is_multi_monitor ? 6 : 12;
         }
@@ -392,6 +398,15 @@ namespace Workday {
                 rect.x,
                 rect.y
             );
+        }
+
+        public Gdk.Rectangle? get_screen_capture_rectangle () {
+            Gdk.Rectangle rect = Gdk.Rectangle ();
+            if (this.screen_cmb.get_active_id () == "all") {
+                Gdk.get_default_root_window ().get_frame_extents (out rect);
+                return rect;
+            }
+            return this.monitor_rects.get (this.screen_cmb.get_active_text ());
         }
     }
 }

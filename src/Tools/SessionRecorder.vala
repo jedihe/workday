@@ -32,6 +32,7 @@ namespace Workday {
 
         ScreenrecorderWindow.CaptureType capture_mode;
         public Gdk.Window window;
+        public Gdk.Rectangle capture_rect { get; private set; }
         public string session_name { get; private set; }
         private int framerate;
         private bool are_speakers_recorded;
@@ -66,7 +67,8 @@ namespace Workday {
                             string format,
                             string extension,
                             int fragment_length,
-                            Gdk.Window? window) {
+                            Gdk.Window? window,
+                            Gdk.Rectangle? capture_rect) {
 
             this.capture_mode = capture_mode;
             this.session_name = session_name;
@@ -78,6 +80,7 @@ namespace Workday {
             this.extension = extension;
             this.fragment_length = fragment_length;
             this.window = window;
+            this.capture_rect = capture_rect;
 
             var session_file = File.new_for_path (Path.build_filename (
                 this.get_session_dir (),
@@ -125,7 +128,8 @@ namespace Workday {
                             is_mic_recorded,
                             is_cursor_captured,
                             format,
-                            this.window);
+                            this.window,
+                            this.capture_rect);
             recorder.start ();
 
             // Auto-splitting mechanism, every fragment_length seconds.

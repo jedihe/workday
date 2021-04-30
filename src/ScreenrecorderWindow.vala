@@ -401,10 +401,8 @@ namespace Workday {
         } 
 
         void capture_screen (string? forced_session_name = null) {
-
-            this.win = Gdk.get_default_root_window ();
-            this.iconify ();
-            start_recording (this.win, forced_session_name);
+            Gdk.Rectangle screen_rect = this.settings_views.get_screen_capture_rectangle ();
+            start_recording (null, screen_rect, forced_session_name);
         }
 
         void capture_window (string? forced_session_name = null) {
@@ -425,7 +423,7 @@ namespace Workday {
                 }
 
                 if (this.win != null) {
-                    start_recording (win, forced_session_name);
+                    start_recording (win, null, forced_session_name);
                 }
                 return false;
             });
@@ -447,11 +445,11 @@ namespace Workday {
 
                 selection_area.close ();
                 this.iconify ();
-                start_recording (this.win, forced_session_name);
+                start_recording (this.win, null, forced_session_name);
             });
         }
 
-        void start_recording (Gdk.Window? win, string? forced_session_name = null) {
+        void start_recording (Gdk.Window? win, Gdk.Rectangle? capture_rect, string? forced_session_name = null) {
             DateTime now = new DateTime.now ();
             var new_session_name = now.format ("%Y-%m-%d-%H-%M-%S");
 
@@ -466,7 +464,8 @@ namespace Workday {
                             settings_views.format,
                             settings_views.extension,
                             WorkdayApp.settings.get_int ("fragment-length"),
-                            win);
+                            win,
+                            capture_rect);
 
             // @TODO: remove support for countdown.
             if (settings_views.delay > 0) {
