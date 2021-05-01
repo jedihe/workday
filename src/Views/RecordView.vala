@@ -53,7 +53,7 @@ namespace Workday {
             back_button.get_style_context ().add_class (Granite.STYLE_CLASS_BACK_BUTTON);
             back_button.set_sensitive (false);
             back_button.clicked.connect (() => {
-                hide_badge_and_progress ();
+                update_badge_and_progress (false, false, (int64) 0, 0.0f);
                 request_new_session ();
             });
 
@@ -124,7 +124,7 @@ namespace Workday {
         }
 
         public void pause_count () {
-            this.hide_badge_and_progress ();
+            this.update_badge_and_progress (true, false);
 
             pause = true;
             if (count != 0) {
@@ -143,7 +143,7 @@ namespace Workday {
         }
 
         public void stop_count () {
-            this.hide_badge_and_progress ();
+            this.update_badge_and_progress (false, false, (int64) 0, 0.0f);
 
             pause = true;
             if (count != 0) {
@@ -152,17 +152,24 @@ namespace Workday {
             }
         }
 
-        private void hide_badge_and_progress () {
-            Granite.Services.Application.set_badge_visible.begin (false);
-            Granite.Services.Application.set_progress_visible.begin (false);
+        private void update_badge_and_progress (bool badge_visibility, bool progress_visibility, int64? badge_val = null, double? progress_val = null) {
+            Granite.Services.Application.set_badge_visible.begin (badge_visibility);
+            Granite.Services.Application.set_progress_visible.begin (progress_visibility);
 
             // Workaround: use a timeout, as setting badge/progress right
             // after visibility does not work at all.
-            Timeout.add (500, () => {
-                Granite.Services.Application.set_badge.begin ((int64) 0);
-                Granite.Services.Application.set_progress.begin (0.0f);
-                return false;
-            });
+            if (badge_val != null) {
+                Timeout.add (500, () => {
+                    Granite.Services.Application.set_badge.begin (badge_val);
+                    return false;
+                });
+            }
+            if (progress_val != null) {
+                Timeout.add (500, () => {
+                    Granite.Services.Application.set_progress.begin (progress_val);
+                    return false;
+                });
+            }
         }
     }
 }
