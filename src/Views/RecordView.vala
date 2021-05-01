@@ -52,7 +52,10 @@ namespace Workday {
             };
             back_button.get_style_context ().add_class (Granite.STYLE_CLASS_BACK_BUTTON);
             back_button.set_sensitive (false);
-            back_button.clicked.connect (() => request_new_session ());
+            back_button.clicked.connect (() => {
+                hide_badge_and_progress ();
+                request_new_session ();
+            });
 
             var label_grid = new Gtk.Grid ();
             label_grid.column_spacing = 6;
@@ -93,6 +96,8 @@ namespace Workday {
 
         private void start_count () {
             back_button.set_sensitive (false);
+            Granite.Services.Application.set_badge_visible.begin (true);
+            Granite.Services.Application.set_progress_visible.begin (true);
             count = Timeout.add_seconds (1, () => {
                 stdout.printf ("On RecordView.start_count () - Timeout.add ()\n");
                 int display_hours;
@@ -104,11 +109,14 @@ namespace Workday {
                     return false;
                 }
 
-                seconds = session_recorder.query_position();
+                seconds = session_recorder.query_position ();
 
                 display_hours = seconds / 3600;
                 display_minutes = (seconds % 3600) / 60;
                 display_seconds = seconds % 60;
+
+                Granite.Services.Application.set_badge.begin ((int64) display_hours);
+                Granite.Services.Application.set_progress.begin ((float) display_minutes / 60.0);
 
                 show_timer_label (time_label, display_hours, display_minutes, display_seconds);
                 return session_recorder.is_session_in_progress;
@@ -116,9 +124,14 @@ namespace Workday {
         }
 
         public void pause_count () {
+            this.hide_badge_and_progress ();
 
             pause = true;
-            count = 0;
+            if (count != 0) {
+                GLib.Source.remove (count);
+                count = 0;
+            }
+
             back_button.set_sensitive (true);
         }
 
@@ -130,9 +143,26 @@ namespace Workday {
         }
 
         public void stop_count () {
+            this.hide_badge_and_progress ();
 
             pause = true;
-            count = 0;
+            if (count != 0) {
+                GLib.Source.remove (count);
+                count = 0;
+            }
+        }
+
+        private void hide_badge_and_progress () {
+            Granite.Services.Application.set_badge_visible.begin (false);
+            Granite.Services.Application.set_progress_visible.begin (false);
+
+            // Workaround: use a timeout, as setting badge/progress right
+            // after visibility does not work at all.
+            Timeout.add (500, () => {
+                Granite.Services.Application.set_badge.begin ((int64) 0);
+                Granite.Services.Application.set_progress.begin (0.0f);
+                return false;
+            });
         }
     }
 }

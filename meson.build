@@ -43,6 +43,7 @@ dependencies = [
     dependency ('gstreamer-pbutils-1.0'),
     dependency ('clutter-gst-3.0'),
     dependency ('clutter-gtk-1.0'),
+    dependency('granite', version: '>=5.2.4'), # 5.2.4 is the first release to support the Launcher API
     m_dep
 ]
 
