@@ -324,7 +324,10 @@ namespace Workday {
         }
 
         private void stop_scheduled_session_file_update () {
-            GLib.Source.remove (this.session_file_update_timeout_source);
+            if (this.session_file_update_timeout_source != 0) {
+                GLib.Source.remove (this.session_file_update_timeout_source);
+                this.session_file_update_timeout_source = 0;
+            }
         }
 
         private void delete_session_file () {

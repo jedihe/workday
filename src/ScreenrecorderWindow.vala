@@ -517,7 +517,7 @@ namespace Workday {
             settings_views.set_sensitive (false);
             Timeout.add (500, () => {
                 if (!session_recorder.is_recording) {
-                    if (settings_views.close_switch.get_state()) {
+                    if (settings_views.close_switch.get_state ()) {
                         close();
                     }
                     this.populate_sessions_popover (this.prev_sessions);

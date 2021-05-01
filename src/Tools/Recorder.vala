@@ -620,7 +620,7 @@ namespace Workday {
         public void pause () {
             pipeline.set_state (Gst.State.PAUSED);
             this.is_recording = false;
-            this.print_pos(pipeline);
+            this.print_pos (pipeline);
         }
 
         public void resume () {
@@ -631,15 +631,21 @@ namespace Workday {
 
         public void stop () {
             stdout.printf("Before processing Recorder.stop()\n");
-            this.print_pos(pipeline);
+            if (pipeline != null) {
+                this.print_pos (pipeline);
+            }
 
             if (!this.is_recording) {
                 //this.resume();
             }
-            pipeline.send_event (new Gst.Event.eos ());
+            if (pipeline != null) {
+                pipeline.send_event (new Gst.Event.eos ());
+            }
 
             stdout.printf("After processing Recorder.stop()\n");
-            this.print_pos(pipeline);
+            if (pipeline != null) {
+                this.print_pos(pipeline);
+            }
         }
 
         private void start_fallback_timer() {
@@ -671,7 +677,7 @@ namespace Workday {
         }
 
         private void print_pos(Gst.Pipeline ppl) {
-            stdout.printf("Pipeline position; %s\n", pipeline_query_position().to_string());
+            stdout.printf("Pipeline position; %s\n", pipeline_query_position ().to_string ());
         }
     }
 }
