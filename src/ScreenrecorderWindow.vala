@@ -240,14 +240,23 @@ namespace Workday {
 
                 } else if (session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
-                    stop_recording ();
-                    send_notification.stop();
+                    var confirm_dlg = new Gtk.MessageDialog (this, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.OK_CANCEL, "Are you sure?");
+                    var resp = confirm_dlg.run ();
+                    confirm_dlg.destroy ();
+                    if (resp == Gtk.ResponseType.OK) {
+                        stop_recording ();
+                        send_notification.stop();
+                    }
 
                 } else if (!session_recorder.is_recording && !countdown.is_active_cd && session_recorder.is_session_in_progress) {
 
-                    //recorder.resume ();
-                    stop_recording ();
-                    send_notification.stop();
+                    var confirm_dlg = new Gtk.MessageDialog (this, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.OK_CANCEL, "Are you sure?");
+                    var resp = confirm_dlg.run ();
+                    confirm_dlg.destroy ();
+                    if (resp == Gtk.ResponseType.OK) {
+                        stop_recording ();
+                        send_notification.stop();
+                    }
 
                 } else if (!session_recorder.is_recording && countdown.is_active_cd && !session_recorder.is_session_in_progress) {
 
