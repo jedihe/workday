@@ -379,6 +379,18 @@ namespace Workday {
         }
 
         private bool join_full_session () {
+            var to_join_frag_names = new Gee.ArrayList<string> ();
+
+            this.fragments_info
+                .filter (e => !e.value.is_invalid)
+                .@foreach (e => {
+                    to_join_frag_names.add (e.key);
+                    return true;
+                });
+            to_join_frag_names.sort ();
+            this.print_list ("to_join_frag_names", to_join_frag_names);
+            // @TODO: write workday-file-list.txt using the sorted list of valid fragments.
+
             string command = "for file in Workday-*; do echo \"file $file\" >> workday-file-list.txt; done && ffmpeg -f concat -i workday-file-list.txt -codec copy Full-%s.mp4 && rm workday-file-list.txt".printf (this.session_name);
             return this.run_cli(this.get_session_dir (), command) == 0;
         }
