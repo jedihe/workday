@@ -629,7 +629,7 @@ namespace Workday {
             this.is_recording = true;
         }
 
-        public void stop () {
+        public void stop (bool sync = false) {
             stdout.printf("Before processing Recorder.stop()\n");
             if (pipeline != null) {
                 this.print_pos (pipeline);
@@ -640,6 +640,11 @@ namespace Workday {
             }
             if (pipeline != null) {
                 pipeline.send_event (new Gst.Event.eos ());
+                if (sync) {
+	                // Wait until error or EOS:
+	                Gst.Bus bus = pipeline.get_bus ();
+	                bus.timed_pop_filtered (Gst.CLOCK_TIME_NONE, Gst.MessageType.ERROR | Gst.MessageType.EOS);
+                }
             }
 
             stdout.printf("After processing Recorder.stop()\n");
