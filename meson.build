@@ -30,6 +30,7 @@ asresources = gnome.compile_resources (
 # See https://mesonbuild.com/howtox.html#add-math-library-lm-portably
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required: false)
+posix_dep = meson.get_compiler('vala').find_library('posix')
 
 # Listing dependencies
 dependencies = [
@@ -44,7 +45,8 @@ dependencies = [
     dependency ('clutter-gst-3.0'),
     dependency ('clutter-gtk-1.0'),
     dependency('granite', version: '>=5.2.4'), # 5.2.4 is the first release to support the Launcher API
-    m_dep
+    m_dep,
+    posix_dep
 ]
 
 subdir ('src')
