@@ -229,6 +229,14 @@ namespace Workday {
             this.stop_scheduled_session_file_update ();
         }
 
+        public void emergency_stop () {
+            // Designed to do the absolute minimum to try and preserve the current fragment.
+            // Depends on the sync mode for Recorder::stop ().
+            if (this.recorder.is_recording && !this.fragment_split_initiated) {
+                recorder.stop (true);
+            }
+        }
+
         public int query_position () {
             if (this.is_recording) {
                 return this.resolved_fragments_total / 1000 + this.recorder.query_position () / 1000;
