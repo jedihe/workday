@@ -54,6 +54,7 @@ namespace Workday {
         private ArrayList<string> found_fragments;
         private HashMap<string, FragmentInfo?> fragments_info;
         private int resolved_fragments_total;
+        private bool is_updating_fragments_info { private get; private set; default =false; }
 
         public SessionRecorder () {
         }
@@ -209,16 +210,19 @@ namespace Workday {
                 }
                 this.is_session_in_progress = false;
 
+                stdout.printf ("stop_session (): Updating fragments info...\n");
+                this.update_fragments_info ();
+
                 if (finish) {
                     Timeout.add (450, () => {
                         this.is_recording = recorder.is_recording;
-                        if (!this.is_recording) {
+                        if (!this.is_recording && !this.is_updating_fragments_info) {
                             if (this.join_full_session ()) {
                                 this.delete_fragments ();
                             }
                             this.delete_session_file ();
                         }
-                        return this.is_recording;
+                        return this.is_recording || this.is_updating_fragments_info;
                     });
                 }
             }
@@ -241,6 +245,7 @@ namespace Workday {
         }
 
         private void update_fragments_info () {
+            this.is_updating_fragments_info = true;
             this.found_fragments = this.find_fragment_files ();
             var unresolved_fragments = this.get_unresolved_fragments ();
 
@@ -284,6 +289,7 @@ namespace Workday {
                 this.update_resolved_fragments_total ();
                 discoverer.stop ();
                 discoverer = null;
+                this.is_updating_fragments_info = false;
             });
             discoverer.start ();
 
@@ -388,10 +394,26 @@ namespace Workday {
                     return true;
                 });
             to_join_frag_names.sort ();
+            // @TODO: fix this hack, since we can't fully guarantee the fragment is closed and valid.
+            if (this.current_fragment_name != "") {
+                to_join_frag_names.add (this.current_fragment_name);
+            }
             this.print_list ("to_join_frag_names", to_join_frag_names);
-            // @TODO: write workday-file-list.txt using the sorted list of valid fragments.
+            string concat_file_list = "";
+            to_join_frag_names.@foreach (v => {
+                concat_file_list += "file %s\n".printf (v);
+                return true;
+            });
+            //stdout.printf ("concat_file_list\n%s", concat_file_list);
 
-            string command = "for file in Workday-*; do echo \"file $file\" >> workday-file-list.txt; done && ffmpeg -f concat -i workday-file-list.txt -codec copy Full-%s.mp4 && rm workday-file-list.txt".printf (this.session_name);
+            var file = File.new_for_path (Path.build_filename (this.get_session_dir (), "workday-file-list.txt"));
+            if (file.query_exists ()) {
+                file.delete ();
+            }
+            var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
+            dos.put_string (concat_file_list);
+
+            string command = "ffmpeg -f concat -i workday-file-list.txt -codec copy Full-%s.mp4 && rm workday-file-list.txt".printf (this.session_name);
             return this.run_cli(this.get_session_dir (), command) == 0;
         }
 
