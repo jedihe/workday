@@ -103,6 +103,21 @@ namespace Workday {
             // Init recorder and countdown objects for boolean test 
             send_notification = new SendNotification(this);
             session_recorder = new SessionRecorder();
+
+            // Try to properly close the current fragment on SIGINT/SIGTERM.
+            GLib.Unix.signal_add (Posix.Signal.INT, () => {
+                stdout.printf ("Got SIGINT!\n");
+                session_recorder.emergency_stop ();
+                this.destroy ();
+                return Source.REMOVE;
+            }, Priority.DEFAULT);
+            GLib.Unix.signal_add (Posix.Signal.TERM, () => {
+                stdout.printf ("Got SIGTERM!\n");
+                session_recorder.emergency_stop ();
+                this.destroy ();
+                return Source.REMOVE;
+            }, Priority.DEFAULT);
+
             countdown = new Countdown (this, this.send_notification);
 
             // Select Screen/Area
