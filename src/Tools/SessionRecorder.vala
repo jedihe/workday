@@ -401,12 +401,13 @@ namespace Workday {
                     to_join_frag_names.add (e.key);
                     return true;
                 });
-            to_join_frag_names.sort ();
-            // @TODO: fix this hack, since we can't fully guarantee the fragment is closed and valid.
-            if (this.current_fragment_name != "") {
+            // Ensure we include the current/last fragment, only once.
+            // The last fragment must have been properly closed by now.
+            if (this.current_fragment_name != "" && !to_join_frag_names.contains (this.current_fragment_name)) {
                 to_join_frag_names.add (this.current_fragment_name);
             }
-            this.print_list ("to_join_frag_names", to_join_frag_names);
+            to_join_frag_names.sort ();
+            // this.print_list ("to_join_frag_names", to_join_frag_names);
             string concat_file_list = "";
             to_join_frag_names.@foreach (v => {
                 concat_file_list += "file %s\n".printf (v);
