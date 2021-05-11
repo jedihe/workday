@@ -686,7 +686,10 @@ namespace Workday {
                 popover_grid.add (empty_btn);
             }
             else {
-                foreach (string sess_name in sessions_info.keys) {
+                var sorted_sessions = new Gee.ArrayList<string> ();
+                sorted_sessions.add_all_array (sessions_info.keys.to_array ());
+                sorted_sessions.sort ();
+                foreach (string sess_name in sorted_sessions) {
                     var sess_duration = sessions_info.get (sess_name).duration;
                     int hours = sess_duration / 3600;
                     int minutes = (sess_duration % 3600) / 60;
