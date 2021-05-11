@@ -33,4 +33,4 @@ Get a minimally working version of Workday, working in elementary; ensure good s
     12. ~~Switch sessions on the fly.~~
     13. ~~Ignore symlinks when discovering fragments~~
     14. ~~Allow setting the session name for new sessions~~.
-    15. Sort the list of in-progress sessions, shown in the popover
+    15. ~~Sort the list of in-progress sessions, shown in the popover~~
