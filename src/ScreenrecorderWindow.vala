@@ -155,7 +155,7 @@ namespace Workday {
 
             // Views
             settings_views = new SettingsView (this);
-            record_view = new RecordView ();
+            record_view = new RecordView (send_notification);
             stack = new Gtk.Stack ();
             stack.add_named (settings_views, "settings");
             stack.add_named (record_view, "record");

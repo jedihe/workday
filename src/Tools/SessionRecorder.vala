@@ -95,7 +95,7 @@ namespace Workday {
                         this.resolved_fragments_total = int.parse (line) * 1000;
                     }
                 } catch (Error e) {
-                    error ("%s", e.message);
+                    error ("Error reading session file %s: %s", session_file.get_path (), e.message);
                 }
             }
         }
