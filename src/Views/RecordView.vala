@@ -26,18 +26,23 @@ namespace Workday {
         private uint count;
         private bool pause = false;
         private int seconds;
+        private int full_hours;
         private SessionRecorder session_recorder;
+        private SendNotification send_notification;
 
         public signal void request_new_session ();
 
 
-        public RecordView () {
+        public RecordView (SendNotification send_notification) {
 
             Object (
                 orientation: Gtk.Orientation.VERTICAL,
                 spacing: 12,
                 margin: 0
             );
+
+            this.full_hours = 0;
+            this.send_notification = send_notification;
         }
 
         construct {
@@ -98,6 +103,8 @@ namespace Workday {
             back_button.set_sensitive (false);
             Granite.Services.Application.set_badge_visible.begin (true);
             Granite.Services.Application.set_progress_visible.begin (true);
+            // Prevent a full_hours notification from showing when resuming a session.
+            this.full_hours = this.session_recorder.query_position () / 3600;
             count = Timeout.add_seconds (1, () => {
                 stdout.printf ("On RecordView.start_count () - Timeout.add ()\n");
                 int display_hours;
@@ -119,6 +126,12 @@ namespace Workday {
                 Granite.Services.Application.set_progress.begin ((float) display_minutes / 60.0);
 
                 show_timer_label (time_label, display_hours, display_minutes, display_seconds);
+
+                if (display_hours > this.full_hours) {
+                    this.full_hours = display_hours;
+                    this.send_notification.full_hours (this.full_hours);
+                }
+
                 return session_recorder.is_session_in_progress;
             });
         }
