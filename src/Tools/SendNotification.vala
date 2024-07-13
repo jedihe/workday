@@ -31,6 +31,7 @@ namespace Workday {
         private Notification pause_notification = new Notification (_("Recording paused"));
         private Notification resume_notification = new Notification (_("Recording resumed"));
         private Notification cancel_cd_notification = new Notification (_("Countdown cancelled"));
+        private Notification full_hours_notification = new Notification (_("Completed Hours"));
         
 
         public SendNotification (Gtk.ApplicationWindow? app) {
@@ -63,6 +64,11 @@ namespace Workday {
 
         public void cancel_countdown () {
             this.app.application.send_notification (app_id, cancel_cd_notification);
+        }
+
+        public void full_hours (int full_hours) {
+            full_hours_notification.set_body (_("Completed %d hours so far.".printf(full_hours)));
+            this.app.application.send_notification (app_id, full_hours_notification);
         }
     }
 }
