@@ -55,11 +55,12 @@ namespace Workday {
         private HashMap<string, SessionInfo?> sessions_info;
 
         public CaptureType capture_mode = CaptureType.SCREEN;
-        private Gtk.Grid capture_type_grid;
+        private Gtk.Box capture_type_grid;
 
-        private Gtk.RadioButton all;
-        private Gtk.RadioButton curr_window;
-        private Gtk.RadioButton selection;
+        private Gtk.ToggleButton all;
+        private Gtk.ToggleButton curr_window;
+        private Gtk.ToggleButton selection;
+        private Gtk.Image all_icon;
         private Gtk.MenuButton prev_sessions;
 
         //Actons Buttons
@@ -71,14 +72,11 @@ namespace Workday {
         private SettingsView settings_views;
         private RecordView record_view;
         private Gtk.Stack stack;
-        private Gtk.Grid grid;
+        private Gtk.Box content;
   
         // Others
-        public Gdk.Window win;
         private SessionRecorder session_recorder;
         public Countdown countdown;
-        private string tmpfilepath;
-        private bool save_dialog_present = false;
         public SendNotification send_notification;
         private bool use_portal_capture;
 
@@ -91,7 +89,6 @@ namespace Workday {
         public ScreenrecorderWindow (Gtk.Application app){
             Object (
                 application: app,
-                border_width: 6,
                 resizable: false
             );
         }
@@ -100,7 +97,6 @@ namespace Workday {
             this.sessions_info = new HashMap<string, SessionInfo?> ();
             this.use_portal_capture = WorkdayApp.is_wayland_session ();
 
-            set_keep_above (true);
             // Load Settings
             GLib.Settings settings = WorkdayApp.settings;
 
@@ -125,27 +121,29 @@ namespace Workday {
             countdown = new Countdown (this, this.send_notification);
 
             // Select Screen/Area
-            all = new Gtk.RadioButton (null);
-            all.image = new Gtk.Image.from_icon_name ("grab-screen-symbolic", Gtk.IconSize.DND);
+            all = new Gtk.ToggleButton ();
+            all_icon = create_icon ("grab-screen-symbolic");
+            all.set_child (all_icon);
             all.tooltip_text = this.use_portal_capture ?
                 _("Select a monitor to share") :
                 _("Grab the whole screen");
 
-            curr_window = new Gtk.RadioButton.from_widget (all);
-            curr_window.image = new Gtk.Image.from_icon_name ("grab-window-symbolic", Gtk.IconSize.DND);
+            curr_window = new Gtk.ToggleButton ();
+            curr_window.set_group (all);
+            curr_window.set_child (create_icon ("grab-window-symbolic"));
             curr_window.tooltip_text = this.use_portal_capture ?
                 _("Select a window to share") :
-                _("Grab the current window");
+                _("Window capture requires the portal backend");
+            curr_window.set_sensitive (this.use_portal_capture);
 
-            selection = new Gtk.RadioButton.from_widget (curr_window);
-            selection.image = new Gtk.Image.from_icon_name ("grab-area-symbolic", Gtk.IconSize.DND);
-            selection.tooltip_text = this.use_portal_capture ?
-                _("Area capture is not available on Wayland yet") :
-                _("Select area to grab");
-            selection.set_sensitive (!this.use_portal_capture);
+            selection = new Gtk.ToggleButton ();
+            selection.set_group (all);
+            selection.set_child (create_icon ("grab-area-symbolic"));
+            selection.tooltip_text = _("Area capture is not available in the GTK4 build yet");
+            selection.set_sensitive (false);
 
             this.prev_sessions = new Gtk.MenuButton();
-            prev_sessions.set_image (new Gtk.Image.from_icon_name ("folder-open-symbolic", Gtk.IconSize.DND));
+            prev_sessions.set_child (create_icon ("folder-open-symbolic"));
             prev_sessions.tooltip_text = _("Resume a previous session");
 
             this.populate_sessions_popover (prev_sessions);
@@ -156,15 +154,14 @@ namespace Workday {
             ((Gtk.Application) this.application).set_accels_for_action ("win.toggle_pause_resume", {"<Alt>p"});
             ((Gtk.Application) this.application).set_accels_for_action ("win.stop_or_cancel", {"<Alt>s"});
 
-            capture_type_grid = new Gtk.Grid ();
+            capture_type_grid = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 12);
             capture_type_grid.halign = Gtk.Align.CENTER;
-            capture_type_grid.column_spacing = 24;
             capture_type_grid.margin_top = capture_type_grid.margin_bottom = 24;
             capture_type_grid.margin_start = capture_type_grid.margin_end = 18;
-            capture_type_grid.add (all);
-            capture_type_grid.add (curr_window);
-            capture_type_grid.add (selection);
-            capture_type_grid.add (prev_sessions);
+            capture_type_grid.append (all);
+            capture_type_grid.append (curr_window);
+            capture_type_grid.append (selection);
+            capture_type_grid.append (prev_sessions);
 
             // Views
             settings_views = new SettingsView (this);
@@ -180,9 +177,8 @@ namespace Workday {
 
             // Right Button
             right_button = new Gtk.Button.with_label (_("Start Session"));
-            right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-            right_button.can_default = true;
-            this.set_default (right_button);
+            right_button.add_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+            this.set_default_widget (right_button);
 
             // Left Button
             left_button = new Gtk.Button.with_label (_("Close"));
@@ -192,61 +188,68 @@ namespace Workday {
             actions.margin_top = 24;
             actions.set_hexpand(true);
             actions.set_homogeneous(true);
-            actions.add (left_button);
-            actions.add (right_button);
+            actions.append (left_button);
+            actions.append (right_button);
 
-            // Main Grid
-            grid = new Gtk.Grid ();
-            grid.margin = 6;
-            grid.margin_top = 0;
-            grid.row_spacing = 6;
-            grid.set_hexpand(true);
-            grid.attach (stack   , 0, 1, 2, 7);
-            grid.attach (actions    , 0, 8, 2, 1);
+            // Main content
+            content = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
+            content.margin_top = 0;
+            content.margin_bottom = 6;
+            content.margin_start = 6;
+            content.margin_end = 6;
+            content.set_hexpand (true);
+            content.append (stack);
+            content.append (actions);
 
             // TitleBar (HeaderBar) with capture_type_grid (Screen/Area selection) attach.
             var titlebar = new Gtk.HeaderBar ();
-            titlebar.has_subtitle = false;
-            titlebar.set_custom_title (capture_type_grid);
-
-            var titlebar_style_context = titlebar.get_style_context ();
-            titlebar_style_context.add_class (Gtk.STYLE_CLASS_FLAT);
-            titlebar_style_context.add_class ("default-decoration");
+            titlebar.set_title_widget (capture_type_grid);
+            titlebar.add_css_class (Granite.STYLE_CLASS_FLAT);
+            titlebar.add_css_class ("default-decoration");
 
             set_titlebar (titlebar);
-            add (grid);
+            set_child (content);
 
 
             // Bind Settings - Start
-            if (this.use_portal_capture &&
-                settings.get_enum ("last-capture-mode") == CaptureType.AREA) {
+            var last_capture_mode = (CaptureType) settings.get_enum ("last-capture-mode");
+            if ((last_capture_mode == CaptureType.AREA && !selection.get_sensitive ()) ||
+                (last_capture_mode == CaptureType.CURRENT_WINDOW && !curr_window.get_sensitive ())) {
                 capture_mode = CaptureType.SCREEN;
                 settings.set_enum ("last-capture-mode", capture_mode);
-                all.active = true;
-            } else if (settings.get_enum ("last-capture-mode") == CaptureType.AREA) {
+                all.set_active (true);
+            } else if (last_capture_mode == CaptureType.AREA) {
                 capture_mode = CaptureType.AREA;
-                selection.active = true;
-            } else if (settings.get_enum ("last-capture-mode") == CaptureType.CURRENT_WINDOW){
+                selection.set_active (true);
+            } else if (last_capture_mode == CaptureType.CURRENT_WINDOW){
                 capture_mode = CaptureType.CURRENT_WINDOW;
-                curr_window.active = true;
+                curr_window.set_active (true);
+            } else {
+                all.set_active (true);
             }
 
             all.toggled.connect (() => {
-                capture_mode = CaptureType.SCREEN;
-                settings.set_enum ("last-capture-mode", capture_mode);
-                settings_views.update_widgets_visibility ();
+                if (all.active) {
+                    capture_mode = CaptureType.SCREEN;
+                    settings.set_enum ("last-capture-mode", capture_mode);
+                    settings_views.update_widgets_visibility ();
+                }
             });
 
             curr_window.toggled.connect (() => {
-                capture_mode = CaptureType.CURRENT_WINDOW;
-                settings.set_enum ("last-capture-mode", capture_mode);
-                settings_views.update_widgets_visibility ();
+                if (curr_window.active) {
+                    capture_mode = CaptureType.CURRENT_WINDOW;
+                    settings.set_enum ("last-capture-mode", capture_mode);
+                    settings_views.update_widgets_visibility ();
+                }
             });
 
             selection.toggled.connect (() => {
-                capture_mode = CaptureType.AREA;
-                settings.set_enum ("last-capture-mode", capture_mode);
-                settings_views.update_widgets_visibility ();
+                if (selection.active) {
+                    capture_mode = CaptureType.AREA;
+                    settings.set_enum ("last-capture-mode", capture_mode);
+                    settings_views.update_widgets_visibility ();
+                }
             });
             // Bind Settings - End
 
@@ -260,32 +263,17 @@ namespace Workday {
             });
 
             // Prevent delete event if record 
-            delete_event.connect (() => {
+            close_request.connect (() => {
                 if (can_quit()) {
 
                     return false;
 
                 } else {
 
-                    iconify ();
+                    minimize ();
                     return true;
                 }
             });
-
-            if (!this.use_portal_capture) {
-                KeybindingManager manager = new KeybindingManager();
-                manager.bind("<Alt>P", () => {
-                    if (session_recorder.is_session_in_progress && !countdown.is_active_cd) {
-                        handle_left_button_action ();
-                    }
-                });
-
-                manager.bind("<Alt>S", () => {
-                    if (countdown.is_active_cd || session_recorder.is_session_in_progress) {
-                        handle_right_button_action ();
-                    }
-                });
-            }
 
             var gtk_settings = Gtk.Settings.get_default ();
             gtk_settings.notify["gtk-application-prefer-dark-theme"].connect (() => {
@@ -297,11 +285,17 @@ namespace Workday {
             settings_views.update_widgets_visibility ();
         }
 
+        private Gtk.Image create_icon (string icon_name) {
+            var image = new Gtk.Image.from_icon_name (icon_name);
+            image.set_icon_size (Gtk.IconSize.LARGE);
+            return image;
+        }
+
         private void update_icons (bool prefers_dark) {
             if (prefers_dark) {
-                all.image = new Gtk.Image.from_icon_name ("grab-screen-symbolic-dark", Gtk.IconSize.DND);
+                all_icon.set_from_icon_name ("grab-screen-symbolic-dark");
             } else {
-                all.image = new Gtk.Image.from_icon_name ("grab-screen-symbolic", Gtk.IconSize.DND);
+                all_icon.set_from_icon_name ("grab-screen-symbolic");
             }
         }
 
@@ -338,29 +332,29 @@ namespace Workday {
 
                 case ButtonsLabelMode.COUNTDOWN:
                     right_button.set_label (_("Cancel"));
-                    right_button.get_style_context ().remove_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-                    right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.remove_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+                    right_button.add_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Minimise"));
                     break;
 
                 case ButtonsLabelMode.RECORDING:
                     right_button.set_label (_("End Session"));
-                    right_button.get_style_context ().remove_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-                    right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.remove_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+                    right_button.add_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Pause"));
                     break;
 
                 case ButtonsLabelMode.RECORDING_PAUSED:
                     right_button.set_label (_("End Session"));
-                    right_button.get_style_context ().remove_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-                    right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.remove_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+                    right_button.add_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Resume"));
                     break;
 
                 case ButtonsLabelMode.SETTINGS:
                     right_button.set_label (_("Start Session"));
-                    right_button.get_style_context ().remove_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
-                    right_button.get_style_context ().add_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+                    right_button.remove_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.add_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
                     left_button.set_label (_("Close"));
                     break;
             }
@@ -389,19 +383,7 @@ namespace Workday {
             }
 
             if (!countdown.is_active_cd && session_recorder.is_session_in_progress) {
-                var confirm_dlg = new Gtk.MessageDialog (
-                    this,
-                    Gtk.DialogFlags.DESTROY_WITH_PARENT | Gtk.DialogFlags.MODAL,
-                    Gtk.MessageType.QUESTION,
-                    Gtk.ButtonsType.OK_CANCEL,
-                    _("Are you sure?")
-                );
-                var resp = confirm_dlg.run ();
-                confirm_dlg.destroy ();
-                if (resp == Gtk.ResponseType.OK) {
-                    stop_recording ();
-                    send_notification.stop ();
-                }
+                present_stop_confirmation ();
                 return;
             }
 
@@ -434,7 +416,7 @@ namespace Workday {
             }
 
             if (!session_recorder.is_recording && countdown.is_active_cd && !session_recorder.is_session_in_progress) {
-                iconify ();
+                minimize ();
                 return;
             }
 
@@ -460,19 +442,42 @@ namespace Workday {
                 this,
                 Gtk.DialogFlags.DESTROY_WITH_PARENT | Gtk.DialogFlags.MODAL,
                 Gtk.MessageType.ERROR,
-                Gtk.ButtonsType.CLOSE,
+                Gtk.ButtonsType.NONE,
                 "%s".printf (message)
             );
-            error_dlg.run ();
-            error_dlg.destroy ();
-            present ();
+            error_dlg.add_button (_("Close"), Gtk.ResponseType.CLOSE);
+            error_dlg.response.connect ((response_id) => {
+                error_dlg.destroy ();
+                present ();
+            });
+            error_dlg.present ();
+        }
+
+        private void present_stop_confirmation () {
+            var confirm_dlg = new Gtk.MessageDialog (
+                this,
+                Gtk.DialogFlags.DESTROY_WITH_PARENT | Gtk.DialogFlags.MODAL,
+                Gtk.MessageType.QUESTION,
+                Gtk.ButtonsType.NONE,
+                _("Are you sure?")
+            );
+            confirm_dlg.add_button (_("Cancel"), Gtk.ResponseType.CANCEL);
+            confirm_dlg.add_button (_("End Session"), Gtk.ResponseType.OK);
+            confirm_dlg.response.connect ((response_id) => {
+                confirm_dlg.destroy ();
+                if (response_id == Gtk.ResponseType.OK) {
+                    stop_recording ();
+                    send_notification.stop ();
+                }
+            });
+            confirm_dlg.present ();
         }
 
         private CaptureSource? request_portal_capture_source (CaptureType requested_mode) {
             try {
                 return PortalScreenCastSession.request_capture_source (
                     requested_mode,
-                    settings_views.pointer_switch.get_state ()
+                    settings_views.pointer_switch.active
                 );
             } catch (Error e) {
                 if (e.matches (IOError.quark (), IOError.CANCELLED)) {
@@ -511,56 +516,11 @@ namespace Workday {
                 return;
             }
 
-            Gdk.Screen screen = null;
-            GLib.List<Gdk.Window> list = null;
-            screen = Gdk.Screen.get_default ();
-            this.iconify ();
-
-            Timeout.add (300, () => { // Wait iconify
-
-                list = screen.get_window_stack ();
-
-                foreach (Gdk.Window item in list) {
-                    if (screen.get_active_window () == item) {
-                        this.win = item;
-                    }
-                }
-
-                if (this.win != null) {
-                    start_recording (
-                        new CaptureSource.for_x11_window (CaptureType.CURRENT_WINDOW, win),
-                        forced_session_name
-                    );
-                }
-                return false;
-            });
+            show_capture_error (_("Window capture requires the portal backend in the GTK4 build."));
         }
 
         void capture_area (string? forced_session_name = null) {
-            if (this.use_portal_capture) {
-                show_capture_error (_("Area capture is not available on Wayland yet."));
-                return;
-            }
-
-            var selection_area = new Screenshot.Widgets.SelectionArea ();
-            selection_area.show_all ();
-
-            selection_area.cancelled.connect (() => {
-
-                selection_area.close ();
-            });
-
-            this.win = selection_area.get_window ();
-
-            selection_area.captured.connect (() => {
-
-                selection_area.close ();
-                this.iconify ();
-                start_recording (
-                    new CaptureSource.for_x11_window (CaptureType.AREA, this.win),
-                    forced_session_name
-                );
-            });
+            show_capture_error (_("Area capture is not available in the GTK4 build yet."));
         }
 
         void start_recording (CaptureSource capture_source, string? forced_session_name = null) {
@@ -574,7 +534,7 @@ namespace Workday {
                             settings_views.framerate,
                             settings_views.speakers_record,
                             settings_views.mic_record,
-                            settings_views.pointer_switch.get_state(),
+                            settings_views.pointer_switch.active,
                             settings_views.format,
                             settings_views.extension,
                             WorkdayApp.settings.get_int ("fragment-length"),
@@ -605,8 +565,6 @@ namespace Workday {
         }
 
         void stop_recording (bool finish = true) {
-            Cancellable cancellable = new Cancellable ();
-
             // Update Buttons
             set_button_label (ButtonsLabelMode.SETTINGS);
             set_button_tooltip(ButtonsTooltipMode.SETTINGS);
@@ -617,20 +575,10 @@ namespace Workday {
             stack.visible_child_name = "settings";
             present ();
 
-            // File tmp_file = File.new_for_path (tmpfilepath);
-            // string file_name = Path.build_filename (session_recorder.get_session_dir (), "Full-%s%s".printf (session_recorder.session_name, settings_views.extension));
-            // File save_file = File.new_for_path (file_name);
-
-            // try {
-            //     tmp_file.move (save_file, 0, cancellable, null);
-            // } catch (Error e) {
-            //     print ("Error: %s\n", e.message);
-            // }
-
             settings_views.set_sensitive (false);
             Timeout.add (500, () => {
                 if (!session_recorder.is_recording) {
-                    if (settings_views.close_switch.get_state ()) {
+                    if (settings_views.close_switch.active) {
                         close();
                     }
                     this.populate_sessions_popover (this.prev_sessions);
@@ -640,46 +588,26 @@ namespace Workday {
                 }
                 return true;
             });
-
-            // Open Sav Dialog
-            //var save_dialog = new SaveDialog (this, tmpfilepath, recorder.width, recorder.height, settings_views.extension);
-            //save_dialog_present = true;
-            //save_dialog.set_keep_above (true);
-            //debug("Sav Dialog Open");
-            //save_dialog.show_all ();
-            //debug("Sav Dialog Close");
-            //save_dialog.set_keep_above (false);
-
-            // save_dialog.close.connect (() => {
-
-            //     debug("Sav Dialog Close Connect");
-
-            //     save_dialog_present = false;
-            //     settings_views.set_sensitive (true);
-            //     capture_type_grid.set_sensitive (true);
-
-            //     //if close after saving
-            //     if(settings_views.close_switch.get_state()) { 
-
-            //         close();
-            //     }
-            // });
         }
 
         public void set_capture_type(int capture_type) {
 
             switch (capture_type) {
                 case 1:
-                    all.activate();
+                    all.set_active (true);
                     break;
                 case 2:
-                    curr_window.activate();
+                    if (curr_window.get_sensitive ()) {
+                        curr_window.set_active (true);
+                    } else {
+                        all.set_active (true);
+                    }
                     break;
                 case 3:
-                    if (this.use_portal_capture) {
-                        all.activate ();
+                    if (selection.get_sensitive ()) {
+                        selection.set_active (true);
                     } else {
-                        selection.activate ();
+                        all.set_active (true);
                     }
                     break;
             }
@@ -688,7 +616,7 @@ namespace Workday {
 
         public void autostart () {
 
-            right_button.activate();
+            right_button.activate ();
         }
 
         public bool can_quit () {
@@ -704,9 +632,122 @@ namespace Workday {
         }
 
         private void on_session_resume (GLib.SimpleAction action, GLib.Variant? param) {
-            stdout.printf ("Triggered action: %s, with param: %s\n", action.get_name (), param.get_string ());
+            if (param == null) {
+                return;
+            }
 
             var session_name = param.get_string ();
+            stdout.printf ("Triggered action: %s, with param: %s\n", action.get_name (), session_name);
+            resume_session_named (session_name);
+        }
+
+        private void populate_sessions_popover (Gtk.MenuButton prev_sessions_button) {
+            this.sessions_info.clear ();
+
+            // Find session-dirs.
+            // Find .workday-session files in each session-dir, read content as integer (seconds).
+            var sessions_dir = File.new_for_path (Path.build_filename (
+                Environment.get_user_special_dir (UserDirectory.VIDEOS),
+                WorkdayApp.SAVE_FOLDER));
+            if (sessions_dir.query_exists ()) {
+                try {
+                    FileEnumerator enumerator = sessions_dir.enumerate_children (
+                        "standard::*",
+                        FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+
+                    FileInfo info = null;
+                    while (((info = enumerator.next_file ()) != null)) {
+                        string session_name_pattern = "^[a-zA-Z0-9-_]+$";
+                        if (info.get_file_type () == FileType.DIRECTORY && Regex.match_simple (session_name_pattern, info.get_name ())) {
+                            File session_file = sessions_dir.resolve_relative_path (Path.build_filename (info.get_name (), ".workday-session"));
+                            if (session_file.query_exists ()) {
+                                try {
+                                    var dis = new DataInputStream (session_file.read ());
+                                    string line;
+                                    // Read lines until end of file (null) is reached
+                                    if ((line = dis.read_line (null)) != null) {
+                                        var session_info = SessionInfo () {
+                                            name = info.get_name (),
+                                            duration = int.parse (line)
+                                        };
+                                        sessions_info.set (info.get_name(), session_info);
+                                    }
+                                } catch (Error e) {
+                                    error ("%s", e.message);
+                                }
+                            }
+                        }
+                    }
+                } catch (Error e) {
+                    warning ("Failed to enumerate pending sessions: %s", e.message);
+                }
+            }
+
+            var popover_grid = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+            popover_grid.margin_top = popover_grid.margin_bottom = 3;
+
+            if (sessions_info.size == 0) {
+                var empty_btn = new Gtk.Button.with_label (_("- No Pending Sessions -")) {
+                    hexpand = true,
+                    sensitive = false,
+                    has_frame = false
+                };
+                popover_grid.append (empty_btn);
+            }
+            else {
+                var sorted_sessions = new Gee.ArrayList<string> ();
+                sorted_sessions.add_all_array (sessions_info.keys.to_array ());
+                sorted_sessions.sort ();
+                foreach (string sess_name in sorted_sessions) {
+                    SessionInfo? session_info = sessions_info.get (sess_name);
+                    if (session_info == null) {
+                        continue;
+                    }
+
+                    var sess_duration = session_info.duration;
+                    int hours = sess_duration / 3600;
+                    int minutes = (sess_duration % 3600) / 60;
+                    string duration_label = "%s%s".printf (
+                        hours > 0 ? hours.to_string () + "h " : "",
+                        minutes.to_string () + "m"
+                    );
+                    var sess_lbl = new Gtk.Label ("<span size='12000' weight='normal'>%s</span>\n%s".printf (sess_name, duration_label)) {
+                        use_markup = true,
+                        halign = Gtk.Align.START
+                    };
+                    var sess_btn = new Gtk.Button () {
+                        hexpand = true,
+                        has_frame = false
+                    };
+                    string target_session = sess_name;
+                    sess_btn.set_child (sess_lbl);
+                    sess_btn.clicked.connect (() => {
+                        var popover = prev_sessions_button.get_popover ();
+                        if (popover != null) {
+                            popover.popdown ();
+                        }
+                        this.resume_session_named (target_session);
+                    });
+
+                    popover_grid.append (sess_btn);
+                }
+            }
+
+            var scrolled_box = new Gtk.ScrolledWindow () {
+                hscrollbar_policy = Gtk.PolicyType.NEVER,
+                max_content_height = 268,
+                propagate_natural_height = true
+            };
+            scrolled_box.set_child (popover_grid);
+
+            var prev_sessions_popover = new Gtk.Popover ();
+            prev_sessions_popover.modal = true;
+            prev_sessions_popover.set_child (scrolled_box);
+
+            prev_sessions_button.popover = prev_sessions_popover;
+        }
+
+        private void resume_session_named (string session_name) {
             switch (capture_mode) {
                 case CaptureType.SCREEN:
                     capture_screen (session_name);
@@ -718,99 +759,6 @@ namespace Workday {
                     capture_area (session_name);
                     break;
             }
-        }
-
-        private void populate_sessions_popover (Gtk.MenuButton prev_sessions_button) {
-            this.sessions_info.clear ();
-
-            // Find session-dirs.
-            // Find .workday-session files in each session-dir, read content as integer (seconds).
-            var sessions_dir = File.new_for_path (Path.build_filename (
-                Environment.get_user_special_dir (UserDirectory.VIDEOS),
-                WorkdayApp.SAVE_FOLDER));
-            FileEnumerator enumerator = sessions_dir.enumerate_children (
-                "standard::*",
-                FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-
-            FileInfo info = null;
-            while (((info = enumerator.next_file ()) != null)) {
-                string session_name_pattern = "^[a-zA-Z0-9-_]+$";
-                if (info.get_file_type () == FileType.DIRECTORY && Regex.match_simple (session_name_pattern, info.get_name ())) {
-                    File session_file = sessions_dir.resolve_relative_path (Path.build_filename (info.get_name (), ".workday-session"));
-                    if (session_file.query_exists ()) {
-                        try {
-                            var dis = new DataInputStream (session_file.read ());
-                            string line;
-                            // Read lines until end of file (null) is reached
-                            if ((line = dis.read_line (null)) != null) {
-                                var session_info = SessionInfo () {
-                                    name = info.get_name (),
-                                    duration = int.parse (line)
-                                };
-                                sessions_info.set (info.get_name(), session_info);
-                            }
-                        } catch (Error e) {
-                            error ("%s", e.message);
-                        }
-                    }
-                }
-            }
-
-            var popover_grid = new Gtk.Grid ();
-            popover_grid.margin_top = popover_grid.margin_bottom = 3;
-            popover_grid.orientation = Gtk.Orientation.VERTICAL;
-
-            if (sessions_info.size == 0) {
-                var empty_btn = new Gtk.ModelButton () {
-                    hexpand = true,
-                    text = _("- No Pending Sessions -")
-                };
-                empty_btn.set_sensitive (false);
-                popover_grid.add (empty_btn);
-            }
-            else {
-                var sorted_sessions = new Gee.ArrayList<string> ();
-                sorted_sessions.add_all_array (sessions_info.keys.to_array ());
-                sorted_sessions.sort ();
-                foreach (string sess_name in sorted_sessions) {
-                    var sess_duration = sessions_info.get (sess_name).duration;
-                    int hours = sess_duration / 3600;
-                    int minutes = (sess_duration % 3600) / 60;
-                    string duration_label = "%s%s".printf (
-                        hours > 0 ? hours.to_string () + "h " : "",
-                        minutes.to_string () + "m"
-                    );
-                    var sess_lbl = new Gtk.Label ("<span size='12000' weight='normal'>%s</span>\n%s".printf (sess_name, duration_label)) {
-                        use_markup = true,
-                        halign = Gtk.Align.START
-                    };
-                    var sess_btn = new Gtk.ModelButton () {
-                        hexpand = true,
-                        text = ""
-                    };
-                    sess_btn.get_child ().destroy ();
-                    sess_btn.add (sess_lbl);
-                    sess_btn.set_detailed_action_name ("win.session_resume::" + sess_name);
-
-                    popover_grid.add (sess_btn);
-                }
-            }
-
-            popover_grid.show_all ();
-
-            var scrolled_box = new Gtk.ScrolledWindow (null, null) {
-                hscrollbar_policy = Gtk.PolicyType.NEVER,
-                max_content_height = 268,
-                propagate_natural_height = true
-            };
-            scrolled_box.add (popover_grid);
-            scrolled_box.show_all ();
-
-            var prev_sessions_popover = new Gtk.Popover (null);
-            prev_sessions_popover.modal = true;
-            prev_sessions_popover.add (scrolled_box);
-
-            prev_sessions_button.popover = prev_sessions_popover;
         }
     }
 }

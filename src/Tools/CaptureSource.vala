@@ -9,7 +9,6 @@ namespace Workday {
 
         public Backend backend;
         public ScreenrecorderWindow.CaptureType capture_mode;
-        public Gdk.Window? window;
         public Gdk.Rectangle capture_rect;
         public bool has_capture_rect = false;
         public PortalScreenCastSession? portal_session;
@@ -23,14 +22,6 @@ namespace Workday {
             this.capture_mode = capture_mode;
             this.capture_rect = capture_rect;
             this.has_capture_rect = true;
-        }
-
-        public CaptureSource.for_x11_window (ScreenrecorderWindow.CaptureType capture_mode,
-                                            Gdk.Window window) {
-            this.backend = Backend.X11;
-            this.capture_mode = capture_mode;
-            this.window = window;
-            this.capture_rect = Gdk.Rectangle ();
         }
 
         public CaptureSource.for_portal (ScreenrecorderWindow.CaptureType capture_mode,

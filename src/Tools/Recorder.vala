@@ -239,12 +239,6 @@ namespace Workday {
         private void setup_x11_source () {
             videosrc = Gst.ElementFactory.make("ximagesrc", "video_src");
 
-            if (this.capture_source.window != null) {
-                Gdk.Rectangle tmp_rect = Gdk.Rectangle ();
-                this.capture_source.window.get_frame_extents (out tmp_rect);
-                this.capture_rect = tmp_rect;
-            }
-
             this.width = capture_rect.width;
             this.height = capture_rect.height;
 
@@ -274,16 +268,6 @@ namespace Workday {
                 videosrc.set ("starty", starty);
                 videosrc.set ("endx",   endx);
                 videosrc.set ("endy",   endy);
-
-            } else if (capture_mode == ScreenrecorderWindow.CaptureType.CURRENT_WINDOW &&
-                       this.capture_source.window != null) {
-
-                videosrc.set ("xid", ((Gdk.X11.Window) this.capture_source.window).get_xid ());
-                debug ("Capture current window.");
-
-                this.startx = 0;
-                this.starty = 0;
-                ensure_even_dimensions_with_crop ("left", "bottom");
             } else {
                 warning ("Unsupported X11 capture mode.");
             }

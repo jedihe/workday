@@ -51,11 +51,11 @@ namespace Workday {
                 hexpand = true,
                 justify = Gtk.Justification.CENTER
             };
-            time_label.get_style_context ().add_class (Granite.STYLE_CLASS_H2_LABEL);
-            back_button = new Gtk.Button.with_label ("New Session") {
+            time_label.add_css_class (Granite.STYLE_CLASS_H2_LABEL);
+            back_button = new Gtk.Button.with_label (_("New Session")) {
                 halign = Gtk.Align.START
             };
-            back_button.get_style_context ().add_class (Granite.STYLE_CLASS_BACK_BUTTON);
+            back_button.add_css_class (Granite.STYLE_CLASS_BACK_BUTTON);
             back_button.set_sensitive (false);
             back_button.clicked.connect (() => {
                 update_badge_and_progress (false, false, (int64) 0, 0.0f);
@@ -67,7 +67,7 @@ namespace Workday {
             label_grid.attach (back_button, 0, 1, 1, 1);
             label_grid.attach (time_label, 0, 2, 1, 1);
 
-            pack_start (label_grid, false, false);
+            append (label_grid);
         }
 
         public void set_recorder(SessionRecorder session_recorder) {

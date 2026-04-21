@@ -27,7 +27,7 @@ namespace Workday {
     public class WorkdayApp : Gtk.Application {
         
         public static GLib.Settings settings;
-        private ScreenrecorderWindow window = null;
+        private ScreenrecorderWindow? window = null;
 
         private new OptionEntry[] options;
 
@@ -56,8 +56,11 @@ namespace Workday {
             add_main_option_entries (options);
 
             settings = new GLib.Settings ("com.github.jedihe.workday");
-            weak Gtk.IconTheme default_theme = Gtk.IconTheme.get_default ();
-            default_theme.add_resource_path ("/com/github/jedihe/workday");
+            var display = Gdk.Display.get_default ();
+            if (display != null) {
+                weak Gtk.IconTheme default_theme = Gtk.IconTheme.get_for_display (display);
+                default_theme.add_resource_path ("/com/github/jedihe/workday");
+            }
 
             var quit_action = new SimpleAction ("quit", null);
             quit_action.activate.connect (() => {
@@ -68,7 +71,7 @@ namespace Workday {
 
                     } else {
 
-                        window.iconify ();
+                        window.minimize ();
                     }
                 }
             });
@@ -112,32 +115,32 @@ namespace Workday {
 
                 var provider = new Gtk.CssProvider ();
                 provider.load_from_resource ("/com/github/jedihe/workday/stylesheet.css");
-                Gtk.StyleContext.add_provider_for_screen (
-                Gdk.Screen.get_default (),
-                provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                );
+                var display = Gdk.Display.get_default ();
+                if (display != null) {
+                    Gtk.StyleContext.add_provider_for_display (
+                        display,
+                        provider,
+                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                    );
+                }
 
-                window = new ScreenrecorderWindow (this);
-                window.get_style_context ().add_class ("rounded");
-                window.show_all ();
+                var current_window = new ScreenrecorderWindow (this);
+                current_window.add_css_class ("rounded");
+                current_window.present ();
+                window = current_window;
                 if (screen || area || win) {
                     
-                    window.iconify ();
-                    set_capture_type(window);
-                    window.autostart();
+                    current_window.minimize ();
+                    set_capture_type (current_window);
+                    current_window.autostart ();
                 }
             }
         }
 
         public static int main (string[] args) {
 
-            Gtk.init (ref args);
             Gst.init (ref args);
             Gst.Debug.set_active(true);
-            var err = GtkClutter.init (ref args);
-            if (err != Clutter.InitError.SUCCESS) {
-                error ("Could not initalize clutter! " + err.to_string ());
-            }
 
             var app = new WorkdayApp ();
             return app.run (args);
@@ -169,16 +172,16 @@ namespace Workday {
             area = false;
         }
 
-        private void set_capture_type(ScreenrecorderWindow winapp) {
+        private void set_capture_type (ScreenrecorderWindow winapp) {
 
-            if (screen){
-                window.set_capture_type(1);
+            if (screen) {
+                winapp.set_capture_type (1);
             }
             else if (win) {
-                window.set_capture_type(2);
+                winapp.set_capture_type (2);
             }
             else if (area) {
-                window.set_capture_type(3);
+                winapp.set_capture_type (3);
             }
             reset_cmd_line_options ();
         }

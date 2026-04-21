@@ -1,15 +1,12 @@
 Source: com.github.jedihe.workday
-Section: x11
+Section: video
 Priority: extra
 Maintainer: John Herreño <jedihe@gmail.com>
 Build-Depends: meson,
                debhelper,
-               libgranite-dev,
-               libgtk-3-dev,
-               libx11-dev,
+               libgranite-7-dev,
+               libgtk-4-dev,
                libgstreamer1.0-dev,
-               libclutter-gst-3.0-dev,
-               libclutter-gtk-1.0-dev,
                valac
 Standards-Version: 3.9.3
 

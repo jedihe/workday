@@ -31,17 +31,16 @@ namespace Workday {
 
             Object (
                 title: parent.title,
+                transient_for: parent,
+                modal: true,
                 application: parent.application
             );
 
             this.send_notification = send_notification;
 
-            window_position = Gtk.WindowPosition.CENTER;
             set_default_size (400, 200);
             set_resizable (false);
-            set_keep_above (true);
             set_deletable(false);
-            stick ();
 
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
             box.margin_start = 30;
@@ -55,13 +54,13 @@ namespace Workday {
             this.count = new Gtk.Label ("<span size='50000'>" + time.to_string () + "</span>");
             this.count.use_markup = true;
 
-            box.pack_start (title);
-            box.pack_start (count);
+            box.append (title);
+            box.append (count);
 
             var content_area = this.get_content_area ();
-            content_area.add (box);
+            content_area.append (box);
 
-            delete_event.connect (() => {
+            close_request.connect (() => {
                 
                 return true;
             });
@@ -70,7 +69,7 @@ namespace Workday {
         public void start (SessionRecorder? session_recorder, ScreenrecorderWindow? app, Gtk.Stack? stack, RecordView? record_view) {
 
             this.is_active_cd = true;
-            this.show_all ();
+            this.present ();
 
             Timeout.add (1000, () => { // Wait 1s
 

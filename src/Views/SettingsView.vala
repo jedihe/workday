@@ -27,54 +27,47 @@ namespace Workday {
     public class SettingsView : Gtk.Box {
 
         public ScreenrecorderWindow window { get; construct; }
-            private Gtk.Label screen_label;
-            private Gtk.ComboBoxText screen_cmb;
-            private HashMap<string, Gdk.Rectangle?> monitor_rects;
-            private Gtk.Window[] lbl_windows;
+        private Gtk.Label screen_label;
+        private Gtk.ComboBoxText screen_cmb;
+        private HashMap<string, Gdk.Rectangle?> monitor_rects;
+        private Gdk.Rectangle all_monitors_rect;
+        private uint monitors_changed_debounced_timer;
 
-            private bool is_multi_monitor = false;
-            private bool use_portal_capture = false;
+        private bool is_multi_monitor = false;
+        private bool use_portal_capture = false;
 
-            // Settings Buttons/Switch/ComboBox
-                // Mouse pointer and close switch
-            public Gtk.Switch pointer_switch;
-            public Gtk.Switch close_switch;
+        // Settings Buttons/Switch/ComboBox
+        public Gtk.Switch pointer_switch;
+        public Gtk.Switch close_switch;
 
-                // Audio
-            private Gtk.CheckButton record_speakers_btn;
-            private Gtk.CheckButton record_mic_btn;
-            private Gtk.Image speaker_icon;
-            private Gtk.Image speaker_icon_mute;
-            private Gtk.Image mic_icon;
-            private Gtk.Image mic_icon_mute;
-            public bool speakers_record = false;
-            public bool mic_record = false;
+        // Audio
+        private Gtk.ToggleButton record_speakers_btn;
+        private Gtk.ToggleButton record_mic_btn;
+        private Gtk.Image speaker_icon;
+        private Gtk.Image mic_icon;
+        public bool speakers_record = false;
+        public bool mic_record = false;
 
-            public int delay;
-            public int framerate;
+        public int delay;
+        public int framerate;
 
-                // Format
-            private enum Column {
-                CODEC_GSK,
-                CODEC_USER,
-                CODEC_EXT
-            }
-            public const string[] codec_user = {"mp4", "mkv", "webm"};
-            public const string[] codec_gsk = {"x264enc-mp4", "x264enc-mkv", "vp8enc"};
-            public const string[] codec_ext = {".mp4", ".mkv", ".webm"};
+        // Format
+        public const string[] codec_user = {"mp4", "mkv", "webm"};
+        public const string[] codec_gsk = {"x264enc-mp4", "x264enc-mkv", "vp8enc"};
+        public const string[] codec_ext = {".mp4", ".mkv", ".webm"};
 
-            private Gtk.ComboBox format_cmb;
-            public string format;
-            public string extension;
+        private Gtk.ComboBoxText format_cmb;
+        public string format;
+        public string extension;
 
-            private Gtk.Entry session_name_ent;
-            public string new_session_name {
-                get { return this.session_name_ent.text; }
-                set { this.session_name_ent.text = value; }
-            }
+        private Gtk.Entry session_name_ent;
+        public string new_session_name {
+            get { return this.session_name_ent.text; }
+            set { this.session_name_ent.text = value; }
+        }
 
-            // Settings Grid
-            private Gtk.Grid sub_grid;
+        // Settings Grid
+        private Gtk.Grid sub_grid;
 
 
         public SettingsView (ScreenrecorderWindow window) {
@@ -102,38 +95,6 @@ namespace Workday {
             screen_label.halign = Gtk.Align.END;
 
             screen_cmb = new Gtk.ComboBoxText ();
-            screen_cmb.changed.connect (() => {
-                stdout.printf ("Screen selected! active_id: %s, active: %i\n", screen_cmb.active_id, screen_cmb.active);
-            });
-
-            bool screen_cmb_was_focused = false;
-            screen_cmb.set_focus_child.connect(() => {
-                bool is_focused = screen_cmb.get_focus_child () != null;
-                if (is_focused && !screen_cmb_was_focused) {
-                    screen_cmb_was_focused = true;
-                    if (!this.use_portal_capture && !this.monitor_rects.is_empty)  {
-                        foreach (var monitor_name in this.monitor_rects.keys) {
-                            var monitor_rect = this.monitor_rects.get (monitor_name);
-                            stdout.printf ("Building lbl_win for monitor %s\n", monitor_name);
-                            var lbl_win = new Workday.MonitorLabelWindow (monitor_rect, monitor_name);
-                            this.lbl_windows += lbl_win;
-                            lbl_win.attached_to = this;
-                            lbl_win.show_all ();
-                        }
-                    }
-                }
-                else if (screen_cmb_was_focused) {
-                    for (var i = 0; i < this.lbl_windows.length; i++) {
-                        this.lbl_windows[i].destroy ();
-                    }
-                    this.lbl_windows = {};
-                    screen_cmb_was_focused = false;
-                }
-            });
-
-            // Assume we won't show the all-screen capture options.
-            this.screen_label.set_no_show_all (true);
-            this.screen_cmb.set_no_show_all (true);
 
             // Grab mouse pointer ? 
             var pointer_label = new Gtk.Label (_("Grab mouse pointer:"));
@@ -154,45 +115,43 @@ namespace Workday {
             audio_label.halign = Gtk.Align.END;
 
                 // From Speakers
-            record_speakers_btn = new Gtk.CheckButton ();
+            record_speakers_btn = new Gtk.ToggleButton ();
             record_speakers_btn.tooltip_text = _("Record sound from computer");
+            speaker_icon = create_icon ("audio-volume-muted-symbolic");
+            record_speakers_btn.set_child (speaker_icon);
             record_speakers_btn.toggled.connect(() => {
-                speakers_record = !speakers_record;
-                if (speakers_record) {
-                    record_speakers_btn.image = speaker_icon;
-                    record_speakers_btn.get_style_context ().add_class (Granite.STYLE_CLASS_ACCENT);
-                } else {
-                    record_speakers_btn.image = speaker_icon_mute;
-                    record_speakers_btn.get_style_context ().remove_class (Granite.STYLE_CLASS_ACCENT);
-                }
+                speakers_record = record_speakers_btn.active;
+                update_audio_button (
+                    record_speakers_btn,
+                    speaker_icon,
+                    speakers_record,
+                    "audio-volume-high-symbolic",
+                    "audio-volume-muted-symbolic"
+                );
             });
-            speaker_icon = new Gtk.Image.from_icon_name ("audio-volume-high-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-            speaker_icon_mute = new Gtk.Image.from_icon_name ("audio-volume-muted-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-            record_speakers_btn.image = speaker_icon_mute;
 
                 // From Mic
-            record_mic_btn = new Gtk.CheckButton ();
+            record_mic_btn = new Gtk.ToggleButton ();
             record_mic_btn.tooltip_text = _("Record sound from microphone");
+            mic_icon = create_icon ("microphone-sensitivity-muted-symbolic");
+            record_mic_btn.set_child (mic_icon);
             record_mic_btn.toggled.connect(() => {
-                mic_record = !mic_record;
-                if (mic_record) {
-                    record_mic_btn.image = mic_icon;
-                    record_mic_btn.get_style_context ().add_class (Granite.STYLE_CLASS_ACCENT);
-                } else {
-                    record_mic_btn.image = mic_icon_mute;
-                    record_mic_btn.get_style_context ().remove_class (Granite.STYLE_CLASS_ACCENT);
-                }
+                mic_record = record_mic_btn.active;
+                update_audio_button (
+                    record_mic_btn,
+                    mic_icon,
+                    mic_record,
+                    "microphone-sensitivity-symbolic",
+                    "microphone-sensitivity-muted-symbolic"
+                );
             });
-            mic_icon = new Gtk.Image.from_icon_name ("microphone-sensitivity-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-            mic_icon_mute = new Gtk.Image.from_icon_name ("microphone-sensitivity-muted-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-            record_mic_btn.image = mic_icon_mute;
 
                 // Audio Buttons Grid
             var audio_grid = new Gtk.Grid ();
             audio_grid.halign = Gtk.Align.START;
             audio_grid.column_spacing = 12;
-            audio_grid.add (record_speakers_btn);
-            audio_grid.add (record_mic_btn);
+            audio_grid.attach (record_speakers_btn, 0, 0, 1, 1);
+            audio_grid.attach (record_mic_btn, 1, 0, 1, 1);
 
             // Delay before capture
             var delay_label = new Gtk.Label (_("Delay in seconds:"));
@@ -208,33 +167,15 @@ namespace Workday {
             var format_label = new Gtk.Label (_("Format:"));
             format_label.halign = Gtk.Align.END;
 
-            Gtk.ListStore list_store = new Gtk.ListStore (3, typeof (string),typeof (string),typeof (string));
-
+            format_cmb = new Gtk.ComboBoxText ();
             for (int i = 0; i < codec_gsk.length; i++) {
-
-                Gtk.TreeIter iter;
-                list_store.append (out iter);
-                list_store.set(iter, Column.CODEC_GSK, codec_gsk[i],
-                                     Column.CODEC_USER, codec_user[i],
-                                     Column.CODEC_EXT, codec_ext[i]);
-
+                format_cmb.append (codec_gsk[i], codec_user[i]);
             }
-
-            format_cmb = new Gtk.ComboBox.with_model (list_store);
-            Gtk.CellRendererText cell = new Gtk.CellRendererText ();
-            format_cmb.pack_start (cell, false);
-            format_cmb.set_attributes (cell, "text", Column.CODEC_USER);
             string saved_format = settings.get_string ("format");
-            for (int i = 0; i < codec_gsk.length; i++) {
-
-                if (saved_format == codec_gsk[i]) {
-
-                    this.format_cmb.set_active (i);
-                    this.format = codec_gsk[i];
-                    this.extension = codec_ext[i];
-                    break;
-                }
+            if (!this.format_cmb.set_active_id (saved_format)) {
+                this.format_cmb.set_active_id (codec_gsk[0]);
             }
+            update_format_selection (this.format_cmb.get_active_id ());
             // Format Combo Box - End
 
             var new_session_name_lbl = new Gtk.Label(_("Session Name:"));
@@ -284,10 +225,10 @@ namespace Workday {
             sub_grid.attach (new_session_name_lbl, 0, 6, 1, 1);
             sub_grid.attach (session_name_ent, 1, 6, 1, 1);
 
-            add(sub_grid);
+            append (sub_grid);
 
             // Bind Settings - Start
-            settings.bind ("screen-capture-area", screen_cmb, "active_id", GLib.SettingsBindFlags.DEFAULT);
+            settings.bind ("screen-capture-area", screen_cmb, "active-id", GLib.SettingsBindFlags.DEFAULT);
             settings.bind ("mouse-pointer", pointer_switch, "active", GLib.SettingsBindFlags.DEFAULT);
             settings.bind ("close-on-save", close_switch, "active", GLib.SettingsBindFlags.DEFAULT);
             settings.bind ("record-computer", record_speakers_btn, "active", GLib.SettingsBindFlags.DEFAULT);
@@ -306,25 +247,44 @@ namespace Workday {
             framerate = framerate_spin.get_value_as_int ();
 
             format_cmb.changed.connect (() => {
-                settings.set_string ("format", codec_gsk[format_cmb.get_active ()]);
-                this.format = codec_gsk[format_cmb.get_active ()];
-                this.extension = codec_ext[format_cmb.get_active ()];
+                update_format_selection (format_cmb.get_active_id ());
+                settings.set_string ("format", this.format);
             });
             // Bind Settings - End
 
+            speakers_record = record_speakers_btn.active;
+            mic_record = record_mic_btn.active;
+            update_audio_button (
+                record_speakers_btn,
+                speaker_icon,
+                speakers_record,
+                "audio-volume-high-symbolic",
+                "audio-volume-muted-symbolic"
+            );
+            update_audio_button (
+                record_mic_btn,
+                mic_icon,
+                mic_record,
+                "microphone-sensitivity-symbolic",
+                "microphone-sensitivity-muted-symbolic"
+            );
+
             if (!this.use_portal_capture) {
-                uint monitors_changed_debounced_timer;
-                Gdk.Screen.get_default ().monitors_changed.connect(() => {
-                    if (monitors_changed_debounced_timer != 0) {
-                        GLib.Source.remove (monitors_changed_debounced_timer);
-                    }
-                    monitors_changed_debounced_timer = Timeout.add (500, () => {
-                        this.detect_monitors ();
-                        this.update_widgets_visibility ();
-                        monitors_changed_debounced_timer = 0;
-                        return false;
+                var display = Gdk.Display.get_default ();
+                if (display != null) {
+                    var monitors = display.get_monitors ();
+                    monitors.items_changed.connect ((position, removed, added) => {
+                        if (monitors_changed_debounced_timer != 0) {
+                            GLib.Source.remove (monitors_changed_debounced_timer);
+                        }
+                        monitors_changed_debounced_timer = Timeout.add (500, () => {
+                            this.detect_monitors ();
+                            this.update_widgets_visibility ();
+                            monitors_changed_debounced_timer = 0;
+                            return false;
+                        });
                     });
-                });
+                }
             }
 
             this.detect_monitors ();
@@ -332,11 +292,71 @@ namespace Workday {
 
         }
 
+        private Gtk.Image create_icon (string icon_name) {
+            var image = new Gtk.Image.from_icon_name (icon_name);
+            image.set_icon_size (Gtk.IconSize.LARGE);
+            return image;
+        }
+
+        private void update_audio_button (Gtk.ToggleButton button,
+                                          Gtk.Image icon,
+                                          bool is_active,
+                                          string active_icon,
+                                          string inactive_icon) {
+            icon.set_from_icon_name (is_active ? active_icon : inactive_icon);
+            if (is_active) {
+                button.add_css_class (Granite.STYLE_CLASS_ACCENT);
+            } else {
+                button.remove_css_class (Granite.STYLE_CLASS_ACCENT);
+            }
+        }
+
+        private void update_format_selection (string? active_id) {
+            int codec_idx = get_codec_index (active_id);
+            if (codec_idx < 0) {
+                codec_idx = 0;
+            }
+
+            this.format = codec_gsk[codec_idx];
+            this.extension = codec_ext[codec_idx];
+        }
+
+        private int get_codec_index (string? codec_id) {
+            if (codec_id == null) {
+                return -1;
+            }
+
+            for (int i = 0; i < codec_gsk.length; i++) {
+                if (codec_gsk[i] == codec_id) {
+                    return i;
+                    }
+            }
+
+            return -1;
+        }
+
+        private Gdk.Rectangle union_rectangles (Gdk.Rectangle lhs, Gdk.Rectangle rhs) {
+            if (lhs.width <= 0 || lhs.height <= 0) {
+                return rhs;
+            }
+
+            int left = int.min (lhs.x, rhs.x);
+            int top = int.min (lhs.y, rhs.y);
+            int right = int.max (lhs.x + lhs.width, rhs.x + rhs.width);
+            int bottom = int.max (lhs.y + lhs.height, rhs.y + rhs.height);
+
+            Gdk.Rectangle rect = Gdk.Rectangle ();
+            rect.x = left;
+            rect.y = top;
+            rect.width = right - left;
+            rect.height = bottom - top;
+            return rect;
+        }
+
         public void update_widgets_visibility () {
             GLib.Settings settings = WorkdayApp.settings;
             bool is_all_capture = settings.get_enum ("last-capture-mode") == ScreenrecorderWindow.CaptureType.SCREEN;
             bool show_monitor_picker = !this.use_portal_capture && this.is_multi_monitor && is_all_capture;
-            stdout.printf ("In update_widgets_visibility (), multi_monitor: %s\n", this.is_multi_monitor.to_string ());
             this.screen_label.set_visible (show_monitor_picker);
             this.screen_cmb.set_visible (show_monitor_picker);
             this.sub_grid.row_spacing = show_monitor_picker ? 6 : 12;
@@ -356,48 +376,38 @@ namespace Workday {
 
             this.screen_cmb.remove_all ();
             this.monitor_rects.clear ();
+            this.all_monitors_rect = Gdk.Rectangle ();
 
             // Always populate the 'all' option.
-            Gdk.Rectangle capture_rect;
-            Gdk.get_default_root_window ().get_frame_extents (out capture_rect);
-            // string all_item_id = this.serialize_rectangle (capture_rect);
             this.screen_cmb.append ("all", _("All Monitors"));
 
-            Gee.ArrayList<int> prioritized_monitor_nums = new Gee.ArrayList<int> ();
-            var scr = Gdk.Screen.get_default ();
-            var disp = scr.get_display ();
-            this.is_multi_monitor = disp.get_n_monitors () > 1;
-            Gdk.Monitor monitor;
-            var monitor_rect = Gdk.Rectangle ();
-            if (this.is_multi_monitor) {
-                // Ensure the primary monitor to be "Monitor 1", no matter the order coming from Gdk.
-                for (var i = 0; i < disp.get_n_monitors (); i++) {
-                    monitor = disp.get_monitor (i);
-                    if (monitor.is_primary ()) {
-                        prioritized_monitor_nums.insert (0, i);
-                        // stdout.printf ("Primary monitor: %i\n", i);
-                    } else {
-                        prioritized_monitor_nums.add (i);
-                    }
-                }
-                for (var i = 0; i < prioritized_monitor_nums.size; i++) {
-                    monitor = disp.get_monitor (prioritized_monitor_nums.get (i));
-                    if (monitor != null) {
-                        monitor_rect = monitor.get_geometry ();
-                        string serialized_rect = this.serialize_rectangle (monitor_rect);
-                        string monitor_name = _("Monitor") + " %i".printf (i+1);
-                        this.monitor_rects.set (monitor_name, monitor_rect);
-                        this.screen_cmb.append (serialized_rect, monitor_name);
-                    }
-                }
+            var display = Gdk.Display.get_default ();
+            if (display == null) {
+                this.is_multi_monitor = false;
+                return;
             }
-            stdout.printf ("monitor_rects.size == %i\n", this.monitor_rects.size);
+
+            var monitors = display.get_monitors ();
+            for (uint i = 0; i < monitors.get_n_items (); i++) {
+                var monitor = monitors.get_item (i) as Gdk.Monitor;
+                if (monitor == null) {
+                    continue;
+                }
+
+                var monitor_rect = monitor.get_geometry ();
+                this.all_monitors_rect = union_rectangles (this.all_monitors_rect, monitor_rect);
+                string monitor_id = "monitor-%u".printf (i);
+                string monitor_name = _("Monitor") + " %u".printf (i + 1);
+                this.monitor_rects.set (monitor_id, monitor_rect);
+                this.screen_cmb.append (monitor_id, monitor_name);
+            }
+
+            this.is_multi_monitor = this.monitor_rects.size > 1;
 
             string last_screen_selected = settings.get_string ("screen-capture-area");
             if (!this.screen_cmb.set_active_id (last_screen_selected)) {
                 this.screen_cmb.set_active_id ("all");
             }
-            stdout.printf ("Auto-selecting capture area: %s\n", this.screen_cmb.get_active_id ());
 
             // Update sub_grid layout.
             this.sub_grid.row_spacing = this.is_multi_monitor ? 6 : 12;
@@ -418,12 +428,16 @@ namespace Workday {
                 return rect;
             }
 
-            if (this.screen_cmb.get_active_id () == "all") {
-                Gdk.get_default_root_window ().get_frame_extents (out rect);
+            string? active_id = this.screen_cmb.get_active_id ();
+            if (active_id == null) {
                 return rect;
             }
 
-            Gdk.Rectangle? selected_rect = this.monitor_rects.get (this.screen_cmb.get_active_text ());
+            if (active_id == "all") {
+                return this.all_monitors_rect;
+            }
+
+            Gdk.Rectangle? selected_rect = this.monitor_rects.get (active_id);
             if (selected_rect != null) {
                 return selected_rect;
             }

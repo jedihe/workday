@@ -37,15 +37,10 @@ dependencies = [
     dependency ('glib-2.0'),
     dependency ('gee-0.8'),
     dependency ('gio-unix-2.0'),
-    dependency ('granite', version: '>=5.4.0'),
-    dependency ('gtk+-3.0'),
-    dependency ('x11'),
-    dependency ('gdk-x11-3.0'),
+    dependency ('granite-7'),
+    dependency ('gtk4'),
     dependency ('gstreamer-1.0'),
     dependency ('gstreamer-pbutils-1.0'),
-    dependency ('clutter-gst-3.0'),
-    dependency ('clutter-gtk-1.0'),
-    dependency('granite', version: '>=5.2.4'), # 5.2.4 is the first release to support the Launcher API
     m_dep,
     posix_dep
 ]

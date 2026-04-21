@@ -1,19 +1,13 @@
 sources = files (
     'Dialogs/Countdown.vala',
-    'Dialogs/SaveDialog.vala',
 
     'Tools/CaptureSource.vala',
-    'Tools/KeybindingManager.vala',
     'Tools/Recorder.vala',
     'Tools/SendNotification.vala',
     'Tools/SessionRecorder.vala',
 
     'Views/RecordView.vala',
     'Views/SettingsView.vala',
-
-    'Widgets/SelectionArea.vala',
-    'Widgets/VideoPlayer.vala',
-    'Widgets/MonitorLabelWindow.vala',
 
     'Application.vala',
     'ScreenrecorderWindow.vala'
