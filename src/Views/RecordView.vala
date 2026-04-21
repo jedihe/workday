@@ -37,8 +37,7 @@ namespace Workday {
 
             Object (
                 orientation: Gtk.Orientation.VERTICAL,
-                spacing: 12,
-                margin: 0
+                spacing: 12
             );
 
             this.full_hours = 0;

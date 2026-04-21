@@ -28,6 +28,9 @@ namespace Workday {
 
     public class ScreenrecorderWindow : Gtk.ApplicationWindow  {
 
+        private const string CSS_CLASS_SUGGESTED_ACTION = "suggested-action";
+        private const string CSS_CLASS_DESTRUCTIVE_ACTION = "destructive-action";
+
         // Capture Type Buttons
         public enum CaptureType {
             SCREEN,
@@ -177,7 +180,7 @@ namespace Workday {
 
             // Right Button
             right_button = new Gtk.Button.with_label (_("Start Session"));
-            right_button.add_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+            right_button.add_css_class (CSS_CLASS_SUGGESTED_ACTION);
             this.set_default_widget (right_button);
 
             // Left Button
@@ -332,29 +335,29 @@ namespace Workday {
 
                 case ButtonsLabelMode.COUNTDOWN:
                     right_button.set_label (_("Cancel"));
-                    right_button.remove_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-                    right_button.add_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.remove_css_class (CSS_CLASS_SUGGESTED_ACTION);
+                    right_button.add_css_class (CSS_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Minimise"));
                     break;
 
                 case ButtonsLabelMode.RECORDING:
                     right_button.set_label (_("End Session"));
-                    right_button.remove_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-                    right_button.add_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.remove_css_class (CSS_CLASS_SUGGESTED_ACTION);
+                    right_button.add_css_class (CSS_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Pause"));
                     break;
 
                 case ButtonsLabelMode.RECORDING_PAUSED:
                     right_button.set_label (_("End Session"));
-                    right_button.remove_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-                    right_button.add_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.remove_css_class (CSS_CLASS_SUGGESTED_ACTION);
+                    right_button.add_css_class (CSS_CLASS_DESTRUCTIVE_ACTION);
                     left_button.set_label (_("Resume"));
                     break;
 
                 case ButtonsLabelMode.SETTINGS:
                     right_button.set_label (_("Start Session"));
-                    right_button.remove_css_class (Gtk.STYLE_CLASS_DESTRUCTIVE_ACTION);
-                    right_button.add_css_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+                    right_button.remove_css_class (CSS_CLASS_DESTRUCTIVE_ACTION);
+                    right_button.add_css_class (CSS_CLASS_SUGGESTED_ACTION);
                     left_button.set_label (_("Close"));
                     break;
             }
@@ -741,7 +744,6 @@ namespace Workday {
             scrolled_box.set_child (popover_grid);
 
             var prev_sessions_popover = new Gtk.Popover ();
-            prev_sessions_popover.modal = true;
             prev_sessions_popover.set_child (scrolled_box);
 
             prev_sessions_button.popover = prev_sessions_popover;

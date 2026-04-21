@@ -59,6 +59,7 @@ namespace Workday {
         private Gtk.ComboBoxText format_cmb;
         public string format;
         public string extension;
+        private GLib.Regex? session_name_filter;
 
         private Gtk.Entry session_name_ent;
         public string new_session_name {
@@ -76,7 +77,6 @@ namespace Workday {
                 orientation: Gtk.Orientation.VERTICAL,
                 spacing: 6,
                 window: window,
-                margin: 0,
                 valign: Gtk.Align.CENTER,
                 margin_top: 10,
                 margin_bottom: 10
@@ -86,6 +86,11 @@ namespace Workday {
         construct {
             monitor_rects = new HashMap<string, Gdk.Rectangle?> ();
             this.use_portal_capture = WorkdayApp.is_wayland_session ();
+            try {
+                this.session_name_filter = new GLib.Regex ("[^a-zA-Z0-9-_]");
+            } catch (GLib.RegexError e) {
+                warning ("Failed to create session name filter: %s", e.message);
+            }
 
             // Load Settings
             GLib.Settings settings = WorkdayApp.settings;
@@ -184,20 +189,28 @@ namespace Workday {
                 placeholder_text = _("(Automatic)"),
                 width_chars = 18
             };
-            // Filter out unwanted characters from the session name.
-            // TODO: try to prevent cursor flashing, probably by doing this: https://stackoverflow.com/a/16567697
             session_name_ent.changed.connect (() => {
-                var new_text = session_name_ent.text;
-                var regex = new GLib.Regex ("[^a-zA-Z0-9-_]");
-                var filtered_text = regex.replace_literal (new_text, -1, 0, "");
-                if (filtered_text.length < new_text.length && session_name_ent.cursor_position < filtered_text.length) {
-                    Idle.add (() => {
-                        session_name_ent.move_cursor (Gtk.MovementStep.LOGICAL_POSITIONS, -1, false);
-                        return false;
-                    });
+                GLib.Regex? session_name_filter = this.session_name_filter;
+                if (session_name_filter == null) {
+                    return;
                 }
-                // Set the filtered_text *after* checking if we should move the cursor.
+
+                var new_text = session_name_ent.text;
+                string filtered_text;
+                try {
+                    filtered_text = session_name_filter.replace_literal (new_text, -1, 0, "");
+                } catch (GLib.RegexError e) {
+                    warning ("Failed to sanitize session name: %s", e.message);
+                    return;
+                }
+
+                if (filtered_text == new_text) {
+                    return;
+                }
+
+                int cursor_position = session_name_ent.get_position ();
                 session_name_ent.text = filtered_text;
+                session_name_ent.set_position (int.max (0, cursor_position - (new_text.length - filtered_text.length)));
             });
 
             // Sub Grid, all switch/checkbox/combobox/spin
@@ -205,7 +218,10 @@ namespace Workday {
             sub_grid = new Gtk.Grid ();
             sub_grid.column_homogeneous = true;
             sub_grid.halign = Gtk.Align.CENTER;
-            sub_grid.margin = 0;
+            sub_grid.margin_top = 0;
+            sub_grid.margin_bottom = 0;
+            sub_grid.margin_start = 0;
+            sub_grid.margin_end = 0;
             sub_grid.row_spacing = this.is_multi_monitor ? 6 : 12;
             sub_grid.column_spacing = 12;
             sub_grid.attach (screen_label, 0, 1, 1, 1);
@@ -355,7 +371,8 @@ namespace Workday {
 
         public void update_widgets_visibility () {
             GLib.Settings settings = WorkdayApp.settings;
-            bool is_all_capture = settings.get_enum ("last-capture-mode") == ScreenrecorderWindow.CaptureType.SCREEN;
+            var last_capture_mode = (ScreenrecorderWindow.CaptureType) settings.get_enum ("last-capture-mode");
+            bool is_all_capture = last_capture_mode == ScreenrecorderWindow.CaptureType.SCREEN;
             bool show_monitor_picker = !this.use_portal_capture && this.is_multi_monitor && is_all_capture;
             this.screen_label.set_visible (show_monitor_picker);
             this.screen_cmb.set_visible (show_monitor_picker);
