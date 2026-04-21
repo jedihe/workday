@@ -154,6 +154,15 @@ namespace Workday {
             }
         }
 
+        public static bool is_wayland_session () {
+            string? session_type = Environment.get_variable ("XDG_SESSION_TYPE");
+            if (session_type != null && session_type.down () == "wayland") {
+                return true;
+            }
+
+            return Environment.get_variable ("WAYLAND_DISPLAY") != null;
+        }
+
         private void reset_cmd_line_options () {
             screen = false;
             win = false;

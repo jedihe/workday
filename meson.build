@@ -36,6 +36,7 @@ posix_dep = meson.get_compiler('vala').find_library('posix')
 dependencies = [
     dependency ('glib-2.0'),
     dependency ('gee-0.8'),
+    dependency ('gio-unix-2.0'),
     dependency ('granite', version: '>=5.4.0'),
     dependency ('gtk+-3.0'),
     dependency ('x11'),

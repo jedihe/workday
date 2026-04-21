@@ -2,6 +2,7 @@ sources = files (
     'Dialogs/Countdown.vala',
     'Dialogs/SaveDialog.vala',
 
+    'Tools/CaptureSource.vala',
     'Tools/KeybindingManager.vala',
     'Tools/Recorder.vala',
     'Tools/SendNotification.vala',

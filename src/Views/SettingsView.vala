@@ -33,6 +33,7 @@ namespace Workday {
             private Gtk.Window[] lbl_windows;
 
             private bool is_multi_monitor = false;
+            private bool use_portal_capture = false;
 
             // Settings Buttons/Switch/ComboBox
                 // Mouse pointer and close switch
@@ -91,6 +92,7 @@ namespace Workday {
 
         construct {
             monitor_rects = new HashMap<string, Gdk.Rectangle?> ();
+            this.use_portal_capture = WorkdayApp.is_wayland_session ();
 
             // Load Settings
             GLib.Settings settings = WorkdayApp.settings;
@@ -109,7 +111,7 @@ namespace Workday {
                 bool is_focused = screen_cmb.get_focus_child () != null;
                 if (is_focused && !screen_cmb_was_focused) {
                     screen_cmb_was_focused = true;
-                    if (!this.monitor_rects.is_empty)  {
+                    if (!this.use_portal_capture && !this.monitor_rects.is_empty)  {
                         foreach (var monitor_name in this.monitor_rects.keys) {
                             var monitor_rect = this.monitor_rects.get (monitor_name);
                             stdout.printf ("Building lbl_win for monitor %s\n", monitor_name);
@@ -310,18 +312,20 @@ namespace Workday {
             });
             // Bind Settings - End
 
-            uint monitors_changed_debounced_timer;
-            Gdk.Screen.get_default ().monitors_changed.connect(() => {
-                if (monitors_changed_debounced_timer != 0) {
-                    GLib.Source.remove (monitors_changed_debounced_timer);
-                }
-                monitors_changed_debounced_timer = Timeout.add (500, () => {
-                    this.detect_monitors ();
-                    this.update_widgets_visibility ();
-                    monitors_changed_debounced_timer = 0;
-                    return false;
+            if (!this.use_portal_capture) {
+                uint monitors_changed_debounced_timer;
+                Gdk.Screen.get_default ().monitors_changed.connect(() => {
+                    if (monitors_changed_debounced_timer != 0) {
+                        GLib.Source.remove (monitors_changed_debounced_timer);
+                    }
+                    monitors_changed_debounced_timer = Timeout.add (500, () => {
+                        this.detect_monitors ();
+                        this.update_widgets_visibility ();
+                        monitors_changed_debounced_timer = 0;
+                        return false;
+                    });
                 });
-            });
+            }
 
             this.detect_monitors ();
             this.update_widgets_visibility ();
@@ -331,15 +335,23 @@ namespace Workday {
         public void update_widgets_visibility () {
             GLib.Settings settings = WorkdayApp.settings;
             bool is_all_capture = settings.get_enum ("last-capture-mode") == ScreenrecorderWindow.CaptureType.SCREEN;
+            bool show_monitor_picker = !this.use_portal_capture && this.is_multi_monitor && is_all_capture;
             stdout.printf ("In update_widgets_visibility (), multi_monitor: %s\n", this.is_multi_monitor.to_string ());
-            this.screen_label.set_visible (this.is_multi_monitor && is_all_capture);
-            this.screen_cmb.set_visible (this.is_multi_monitor && is_all_capture);
-            this.sub_grid.row_spacing = this.is_multi_monitor && is_all_capture ? 6 : 12;
-            this.set_margin_top (this.is_multi_monitor && is_all_capture ? 6 : 10);
-            this.set_margin_bottom (this.is_multi_monitor && is_all_capture ? 5 : 10);
+            this.screen_label.set_visible (show_monitor_picker);
+            this.screen_cmb.set_visible (show_monitor_picker);
+            this.sub_grid.row_spacing = show_monitor_picker ? 6 : 12;
+            this.set_margin_top (show_monitor_picker ? 6 : 10);
+            this.set_margin_bottom (show_monitor_picker ? 5 : 10);
         }
 
         private void detect_monitors () {
+            if (this.use_portal_capture) {
+                this.is_multi_monitor = false;
+                this.screen_cmb.remove_all ();
+                this.monitor_rects.clear ();
+                return;
+            }
+
             GLib.Settings settings = WorkdayApp.settings;
 
             this.screen_cmb.remove_all ();
@@ -400,13 +412,23 @@ namespace Workday {
             );
         }
 
-        public Gdk.Rectangle? get_screen_capture_rectangle () {
+        public Gdk.Rectangle get_screen_capture_rectangle () {
             Gdk.Rectangle rect = Gdk.Rectangle ();
+            if (this.use_portal_capture) {
+                return rect;
+            }
+
             if (this.screen_cmb.get_active_id () == "all") {
                 Gdk.get_default_root_window ().get_frame_extents (out rect);
                 return rect;
             }
-            return this.monitor_rects.get (this.screen_cmb.get_active_text ());
+
+            Gdk.Rectangle? selected_rect = this.monitor_rects.get (this.screen_cmb.get_active_text ());
+            if (selected_rect != null) {
+                return selected_rect;
+            }
+
+            return rect;
         }
     }
 }

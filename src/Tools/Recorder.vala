@@ -28,7 +28,7 @@ namespace Workday {
     public class Recorder : GLib.Object {
 
         ScreenrecorderWindow.CaptureType capture_mode;
-        public Gdk.Window window;
+        private CaptureSource capture_source;
         public Gdk.Rectangle capture_rect { get; private set; }
         private string tmp_file;
         private int framerate;
@@ -86,8 +86,7 @@ namespace Workday {
                             bool record_mic,
                             bool capture_cursor,
                             string format,
-                            Gdk.Window? window,
-                            Gdk.Rectangle? capture_rect) {
+                            CaptureSource capture_source) {
 
             this.capture_mode = capture_mode;
             this.tmp_file = tmp_file;
@@ -96,8 +95,8 @@ namespace Workday {
             this.is_mic_recorded = record_mic;
             this.is_cursor_captured = capture_cursor;
             this.format = format;
-            this.window = window;
-            this.capture_rect = capture_rect;
+            this.capture_source = capture_source;
+            this.capture_rect = capture_source.capture_rect;
 
             string cores = "0-1";
             try {
@@ -122,74 +121,10 @@ namespace Workday {
 
         private void setup_video_source () {
 
-            videosrc = Gst.ElementFactory.make("ximagesrc", "video_src");
-
-            if (this.window != null) {
-                Gdk.Rectangle tmp_rect = Gdk.Rectangle ();
-                this.window.get_frame_extents (out tmp_rect);
-                capture_rect = tmp_rect;
-            }
-
-            this.width = capture_rect.width;
-            this.height = capture_rect.height;
-
-            if (capture_mode == ScreenrecorderWindow.CaptureType.SCREEN || 
-                capture_mode == ScreenrecorderWindow.CaptureType.AREA) {
-
-                this.startx = capture_rect.x;
-                this.starty = capture_rect.y;
-                this.endx = this.startx + this.width - 1;
-                this.endy = this.starty + this.height - 1;
-
-                // H264 requirement is that video dimensions are divisible by 2.
-                // If they are not, we have to get rid of that extra pixel.
-                if  ( this.width % 2 != 0 && (this.format == "x264enc-mkv" ||
-                                              this.format == "x264enc-mp4")) {
-                    this.endx -= 1;
-                    this.width -= 1;
-                }
-
-                if  ( this.height % 2 != 0 && (this.format == "x264enc-mkv" ||
-                                               this.format == "x264enc-mp4")) {
-                    this.endy -= 1;
-                    this.height -= 1;
-                }
-
-                videosrc.set ("startx", startx);
-                videosrc.set ("starty", starty);
-                videosrc.set ("endx",   endx);
-                videosrc.set ("endy",   endy);
-
-            } else if (capture_mode == ScreenrecorderWindow.CaptureType.CURRENT_WINDOW) {
-
-                videosrc.set ("xid", ((Gdk.X11.Window) this.window).get_xid());
-                debug ("Capture current window.");
-
-                this.startx = 0;
-                this.starty = 0;
-
-                if (this.format == "x264enc-mkv" ||
-                    this.format == "x264enc-mp4") {
-
-                    this.videocrop = Gst.ElementFactory.make("videocrop", "cropper");
-
-                    if (this.width % 2 == 1) {
-
-                        this.videocrop.set_property("left", 1);
-                        this.crop_vid = true;
-                        this.width -= 1;
-                    }
-
-                    if (height % 2 == 1) {
-
-                        this.videocrop.set_property("bottom", 1);
-                        this.crop_vid = true;
-                        this.height -= 1;
-                    }
-                }
+            if (this.capture_source.is_portal ()) {
+                setup_portal_source ();
             } else {
-
-                print("Open an error dialog window ?");
+                setup_x11_source ();
             }
 
             debug("setup_video_source \n");
@@ -200,8 +135,10 @@ namespace Workday {
             debug ("endx: " + endx.to_string());
             debug ("endy: " + endy.to_string());
 
-            videosrc.set_property ("use-damage", false);
-            videosrc.set_property ("show-pointer", is_cursor_captured);
+            if (!this.capture_source.is_portal ()) {
+                videosrc.set_property ("use-damage", false);
+                videosrc.set_property ("show-pointer", is_cursor_captured);
+            }
 
             Gst.Caps vid_caps = Gst.Caps.from_string("video/x-raw,framerate=1/2");
             vid_caps_filter = Gst.ElementFactory.make("capsfilter", "vid_filter");
@@ -297,6 +234,106 @@ namespace Workday {
 
             vid_in_queue = Gst.ElementFactory.make("queue", "queue_v1");
             vid_out_queue = Gst.ElementFactory.make("queue", "queue_v2");
+        }
+
+        private void setup_x11_source () {
+            videosrc = Gst.ElementFactory.make("ximagesrc", "video_src");
+
+            if (this.capture_source.window != null) {
+                Gdk.Rectangle tmp_rect = Gdk.Rectangle ();
+                this.capture_source.window.get_frame_extents (out tmp_rect);
+                this.capture_rect = tmp_rect;
+            }
+
+            this.width = capture_rect.width;
+            this.height = capture_rect.height;
+
+            if (capture_mode == ScreenrecorderWindow.CaptureType.SCREEN ||
+                capture_mode == ScreenrecorderWindow.CaptureType.AREA) {
+
+                this.startx = capture_rect.x;
+                this.starty = capture_rect.y;
+                this.endx = this.startx + this.width - 1;
+                this.endy = this.starty + this.height - 1;
+
+                // H264 requirement is that video dimensions are divisible by 2.
+                // If they are not, we have to get rid of that extra pixel.
+                if (this.width % 2 != 0 && (this.format == "x264enc-mkv" ||
+                                            this.format == "x264enc-mp4")) {
+                    this.endx -= 1;
+                    this.width -= 1;
+                }
+
+                if (this.height % 2 != 0 && (this.format == "x264enc-mkv" ||
+                                             this.format == "x264enc-mp4")) {
+                    this.endy -= 1;
+                    this.height -= 1;
+                }
+
+                videosrc.set ("startx", startx);
+                videosrc.set ("starty", starty);
+                videosrc.set ("endx",   endx);
+                videosrc.set ("endy",   endy);
+
+            } else if (capture_mode == ScreenrecorderWindow.CaptureType.CURRENT_WINDOW &&
+                       this.capture_source.window != null) {
+
+                videosrc.set ("xid", ((Gdk.X11.Window) this.capture_source.window).get_xid ());
+                debug ("Capture current window.");
+
+                this.startx = 0;
+                this.starty = 0;
+                ensure_even_dimensions_with_crop ("left", "bottom");
+            } else {
+                warning ("Unsupported X11 capture mode.");
+            }
+        }
+
+        private void setup_portal_source () {
+            videosrc = Gst.ElementFactory.make ("pipewiresrc", "video_src");
+            try {
+                videosrc.set_property ("fd", this.capture_source.open_pipewire_remote ());
+            } catch (Error e) {
+                error ("Failed to open PipeWire remote: %s", e.message);
+            }
+            videosrc.set_property ("path", this.capture_source.portal_node_id.to_string ());
+            videosrc.set_property ("do-timestamp", true);
+
+            if (this.capture_source.has_capture_rect) {
+                this.capture_rect = this.capture_source.capture_rect;
+                this.width = this.capture_rect.width;
+                this.height = this.capture_rect.height;
+            }
+
+            this.startx = this.capture_rect.x;
+            this.starty = this.capture_rect.y;
+
+            ensure_even_dimensions_with_crop ("right", "bottom");
+        }
+
+        private void ensure_even_dimensions_with_crop (string horizontal_edge,
+                                                       string vertical_edge) {
+            if (this.format != "x264enc-mkv" && this.format != "x264enc-mp4") {
+                return;
+            }
+
+            if (this.width <= 0 || this.height <= 0) {
+                return;
+            }
+
+            this.videocrop = Gst.ElementFactory.make ("videocrop", "cropper");
+
+            if (this.width % 2 == 1) {
+                this.videocrop.set_property (horizontal_edge, 1);
+                this.crop_vid = true;
+                this.width -= 1;
+            }
+
+            if (this.height % 2 == 1) {
+                this.videocrop.set_property (vertical_edge, 1);
+                this.crop_vid = true;
+                this.height -= 1;
+            }
         }
 
         private void setup_audio_sources () {

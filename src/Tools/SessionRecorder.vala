@@ -31,8 +31,7 @@ namespace Workday {
         }
 
         ScreenrecorderWindow.CaptureType capture_mode;
-        public Gdk.Window window;
-        public Gdk.Rectangle capture_rect { get; private set; }
+        private CaptureSource? capture_source;
         public string session_name { get; private set; }
         private int framerate;
         private bool are_speakers_recorded;
@@ -68,8 +67,7 @@ namespace Workday {
                             string format,
                             string extension,
                             int fragment_length,
-                            Gdk.Window? window,
-                            Gdk.Rectangle? capture_rect) {
+                            CaptureSource capture_source) {
 
             this.capture_mode = capture_mode;
             this.session_name = session_name;
@@ -80,8 +78,7 @@ namespace Workday {
             this.format = format;
             this.extension = extension;
             this.fragment_length = fragment_length;
-            this.window = window;
-            this.capture_rect = capture_rect;
+            this.capture_source = capture_source;
 
             var session_file = File.new_for_path (Path.build_filename (
                 this.get_session_dir (),
@@ -121,6 +118,11 @@ namespace Workday {
             var fragment_file_path = Path.build_filename (session_dir, this.current_fragment_name);
             debug ("Fragment file created at: %s", fragment_file_path);
 
+            if (this.capture_source == null) {
+                warning ("SessionRecorder.start_fragment(): missing capture source.");
+                return;
+            }
+
             this.recorder = new Recorder();
             recorder.config (capture_mode,
                             fragment_file_path,
@@ -129,8 +131,7 @@ namespace Workday {
                             is_mic_recorded,
                             is_cursor_captured,
                             format,
-                            this.window,
-                            this.capture_rect);
+                            this.capture_source);
             recorder.start ();
 
             // Auto-splitting mechanism, every fragment_length seconds.
@@ -217,12 +218,22 @@ namespace Workday {
                     Timeout.add (450, () => {
                         this.is_recording = recorder.is_recording;
                         if (!this.is_recording && !this.is_updating_fragments_info) {
+                            this.release_capture_source ();
                             if (this.join_full_session ()) {
                                 this.delete_fragments ();
                             }
                             this.delete_session_file ();
                         }
                         return this.is_recording || this.is_updating_fragments_info;
+                    });
+                } else {
+                    Timeout.add (450, () => {
+                        this.is_recording = recorder.is_recording;
+                        if (!this.is_recording) {
+                            this.release_capture_source ();
+                            return false;
+                        }
+                        return true;
                     });
                 }
             }
@@ -235,6 +246,7 @@ namespace Workday {
             if (this.recorder.is_recording && !this.fragment_split_initiated) {
                 recorder.stop (true);
             }
+            this.release_capture_source ();
         }
 
         public int query_position () {
@@ -250,6 +262,13 @@ namespace Workday {
                 Environment.get_user_special_dir (UserDirectory.VIDEOS),
                 WorkdayApp.SAVE_FOLDER,
                 this.session_name);
+        }
+
+        public void release_capture_source () {
+            if (this.capture_source != null) {
+                this.capture_source.close ();
+                this.capture_source = null;
+            }
         }
 
         private void update_fragments_info () {
